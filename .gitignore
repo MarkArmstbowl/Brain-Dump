@@ -1,0 +1,20 @@
+# Local environment files (the current app needs no environment variables)
+.env
+.env.*
+!.env.example
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local tooling and verification output
+__pycache__/
+*.pyc
+node_modules/
+artifacts/
+test-results/
+playwright-report/
+*.log

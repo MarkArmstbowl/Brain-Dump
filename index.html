@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A little space to capture what's on your mind." />
+    <title>Brain Dump</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="page-header">
+        <span class="brand-mark" aria-hidden="true">b.</span>
+        <p class="eyebrow">A LITTLE SPACE FOR YOUR THOUGHTS</p>
+        <h1>Brain Dump</h1>
+        <p class="subtitle">Clear your mind, one thought at a time.</p>
+      </header>
+
+      <section class="composer" aria-labelledby="thought-label">
+        <form id="thought-form">
+          <label id="thought-label" for="thought-input">What's on your mind?</label>
+          <textarea id="thought-input" name="thought" rows="4" placeholder="Start anywhere. It doesn't have to be perfectly worded." required></textarea>
+          <div class="composer-footer">
+            <p>One thought is a good place to start.</p>
+            <button class="primary-button" type="submit">Add Thought <span aria-hidden="true">＋</span></button>
+          </div>
+        </form>
+      </section>
+
+      <p id="storage-error" class="error-message" role="alert" hidden></p>
+      <p id="status" class="sr-only" role="status" aria-live="polite"></p>
+
+      <section class="dump-section" aria-labelledby="dump-heading">
+        <div class="section-heading">
+          <h2 id="dump-heading">Your Brain Dump</h2>
+          <span id="thought-count" class="thought-count">0 thoughts</span>
+        </div>
+        <div id="empty-state" class="empty-state">
+          <span class="empty-mark" aria-hidden="true">✳</span>
+          <h3>A little more room to think.</h3>
+          <p>No thoughts here yet. Add your first one above.</p>
+        </div>
+        <ul id="thought-list" class="thought-list" aria-label="Your thoughts"></ul>
+      </section>
+
+      <footer>Saved in this browser. A space that's yours.</footer>
+      <noscript><p class="error-message">Please enable JavaScript to add and manage your thoughts.</p></noscript>
+    </main>
+  </body>
+</html>
