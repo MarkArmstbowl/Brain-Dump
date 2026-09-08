@@ -22,6 +22,15 @@
         <form id="thought-form">
           <label id="thought-label" for="thought-input">What's on your mind?</label>
           <textarea id="thought-input" name="thought" rows="4" placeholder="Start anywhere. It doesn't have to be perfectly worded." required></textarea>
+          <div class="category-field">
+            <label for="category-input">What kind of thought is this?</label>
+            <select id="category-input" class="category-select" name="category">
+              <option value="unsorted">Unsorted</option>
+              <option value="do">Do</option>
+              <option value="decide">Decide</option>
+              <option value="let-go">Let Go</option>
+            </select>
+          </div>
           <div class="composer-footer">
             <p>One thought is a good place to start.</p>
             <button class="primary-button" type="submit">Add Thought <span aria-hidden="true">＋</span></button>
@@ -36,6 +45,13 @@
         <div class="section-heading">
           <h2 id="dump-heading">Your Brain Dump</h2>
           <span id="thought-count" class="thought-count">0 thoughts</span>
+        </div>
+        <div id="thought-filters" class="thought-filters" aria-label="Filter thoughts">
+          <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="filter-button" type="button" data-filter="unsorted" aria-pressed="false">Unsorted</button>
+          <button class="filter-button" type="button" data-filter="do" aria-pressed="false">Do</button>
+          <button class="filter-button" type="button" data-filter="decide" aria-pressed="false">Decide</button>
+          <button class="filter-button" type="button" data-filter="let-go" aria-pressed="false">Let Go</button>
         </div>
         <div id="empty-state" class="empty-state">
           <span class="empty-mark" aria-hidden="true">✳</span>
