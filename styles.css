@@ -9,7 +9,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, textarea { font: inherit; }
+button, textarea, select { font: inherit; }
 button { cursor: pointer; }
 [hidden] { display: none !important; }
 
@@ -41,6 +41,33 @@ textarea {
   resize: vertical;
 }
 textarea::placeholder { color: #767e76; }
+.category-field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; margin-top: 16px; }
+.category-field label { margin: 0; font-size: 13px; color: #5f6d62; }
+select {
+  min-width: 148px;
+  padding: 10px 42px 10px 34px;
+  border: 1px solid #ccd7c7;
+  border-radius: 999px;
+  appearance: none;
+  background-color: #f6f8f3;
+  background-image:
+    radial-gradient(circle, #789969 0 3px, transparent 3.5px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='m2 2 5 5 5-5' stroke='%23425d49' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #fff 0%, #f3f6f0 100%);
+  background-position: 17px center, right 15px center, center;
+  background-repeat: no-repeat;
+  background-size: 7px 7px, 12px 8px, 100% 100%;
+  color: #293c34;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  box-shadow: 0 1px 2px #293c3410, inset 0 1px 0 #ffffffcc;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+select:hover { border-color: #91a386; background-color: #f0f4ed; box-shadow: 0 3px 10px #293c3412, inset 0 1px 0 #fff; }
+select:active { transform: translateY(1px); }
+select:focus-visible { border-color: #789969; box-shadow: 0 0 0 4px #78996924; outline: none; }
 :focus-visible { outline: 3px solid #789969; outline-offset: 3px; }
 .composer-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; }
 .composer-footer p { font-size: 12px; color: #70796e; margin: 0; }
@@ -52,13 +79,23 @@ button { border: 1px solid transparent; border-radius: 8px; padding: 8px 13px; f
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 h2 { font-size: 18px; font-weight: 600; margin: 0; }
 .thought-count { color: #65705f; background: #eaf0e5; border-radius: 20px; padding: 3px 11px; font-size: 12px; white-space: nowrap; }
+.thought-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.filter-button { padding: 6px 12px; background: transparent; border-color: #d8dfd3; color: #5d695f; }
+.filter-button:hover { background: #f0f3ed; }
+.filter-button.is-active { background: #3e5d49; border-color: #3e5d49; color: #fff; }
 .empty-state { padding: 34px 18px; text-align: center; border: 1px dashed #d1dacb; border-radius: 14px; }
 .empty-mark { display: block; font-size: 30px; color: #839674; }
 .empty-state h3 { font-size: 15px; font-weight: 500; margin: 10px 0 4px; }
 .empty-state p { color: #70796e; font-size: 13px; margin: 0; }
 .thought-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .thought-card { padding: 20px; border: 1px solid #dce2d8; border-radius: 12px; background: #fff; }
+.category-badge { display: inline-block; margin-bottom: 10px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.category-unsorted { background: #eef0ed; color: #59615b; }
+.category-do { background: #e4efe0; color: #3c623e; }
+.category-decide { background: #fff1cf; color: #725a20; }
+.category-let-go { background: #f2e8f2; color: #6d4d6d; }
 .thought-text { margin: 0 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.thought-card form label:not(:first-child) { margin-top: 14px; }
 .thought-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
 .secondary-button { background: #f0f3ed; color: #42583e; }
 .secondary-button:hover { background: #e2e9dc; }
@@ -73,5 +110,7 @@ footer { margin-top: 32px; text-align: center; color: #747c70; font-size: 11px; 
   .composer { padding: 20px; }
   .composer-footer { align-items: stretch; flex-direction: column; gap: 12px; }
   .composer-footer p { text-align: center; }
+  .category-field { grid-template-columns: 1fr; }
+  .category-field select { width: 100%; }
   .page-header { margin-bottom: 28px; }
 }
