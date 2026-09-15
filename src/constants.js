@@ -1,0 +1,10 @@
+export const CATEGORIES = [
+  { value: "unsorted", label: "Unsorted" },
+  { value: "do", label: "Do" },
+  { value: "decide", label: "Decide" },
+  { value: "let-go", label: "Let Go" }
+];
+
+export const CATEGORY_LABELS = Object.fromEntries(
+  CATEGORIES.map(({ value, label }) => [value, label])
+);
