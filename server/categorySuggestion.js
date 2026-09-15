@@ -36,16 +36,20 @@ function sendJson(response, statusCode, body) {
 }
 
 async function readJsonBody(request) {
-  let body = "";
+  const chunks = [];
+  let size = 0;
 
   for await (const chunk of request) {
-    body += chunk;
-    if (Buffer.byteLength(body) > MAX_REQUEST_BYTES) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > MAX_REQUEST_BYTES) {
       throw new Error("REQUEST_TOO_LARGE");
     }
+    chunks.push(buffer);
   }
 
   try {
+    const body = Buffer.concat(chunks).toString("utf8");
     return JSON.parse(body || "{}");
   } catch {
     throw new Error("INVALID_JSON");
