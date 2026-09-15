@@ -12,6 +12,9 @@ function createDraft() {
 export default function ThoughtComposer({ onAddThoughts }) {
   const [drafts, setDrafts] = useState(() => [createDraft()]);
   const [validationErrors, setValidationErrors] = useState({});
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pastedText, setPastedText] = useState("");
+  const [pasteError, setPasteError] = useState("");
   const inputRefs = useRef([]);
 
   function updateDraft(id, changes) {
@@ -45,6 +48,25 @@ export default function ThoughtComposer({ onAddThoughts }) {
       delete nextErrors[id];
       return nextErrors;
     });
+  }
+
+  function splitPastedThoughts() {
+    const lines = pastedText
+      .split(/\r?\n/)
+      .map((line) => line.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, "").trim())
+      .filter(Boolean);
+
+    if (lines.length < 2) {
+      setPasteError("Paste at least two non-empty lines, with one thought on each line.");
+      return;
+    }
+
+    const pastedDrafts = lines.map((text) => ({ ...createDraft(), text }));
+    const hasWrittenDraft = drafts.some((draft) => draft.text.trim());
+    setDrafts(hasWrittenDraft ? [...drafts, ...pastedDrafts] : pastedDrafts);
+    setPastedText("");
+    setPasteError("");
+    setPasteOpen(false);
   }
 
   function handleSubmit(event) {
@@ -86,6 +108,49 @@ export default function ThoughtComposer({ onAddThoughts }) {
       </div>
 
       <form onSubmit={handleSubmit}>
+        <div className="capture-tools">
+          <button
+            className="paste-toggle-button"
+            type="button"
+            aria-expanded={pasteOpen}
+            onClick={() => {
+              setPasteOpen((isOpen) => !isOpen);
+              setPasteError("");
+            }}
+          >
+            <span aria-hidden="true">☷</span> Paste multiple thoughts
+          </button>
+          <p>One thought per line. Review them before adding.</p>
+        </div>
+
+        {pasteOpen && (
+          <div className="paste-panel">
+            <label htmlFor="paste-thoughts">Paste your list</label>
+            <textarea
+              id="paste-thoughts"
+              rows="5"
+              value={pastedText}
+              autoFocus
+              placeholder={"Finish the Agile assignment\nEmail the professor\nBook a dentist appointment"}
+              onChange={(event) => {
+                setPastedText(event.target.value);
+                setPasteError("");
+              }}
+              aria-describedby={pasteError ? "paste-validation" : "paste-help"}
+            />
+            <p id="paste-help" className="field-help">Bullets and numbered-list prefixes are removed automatically.</p>
+            {pasteError && <p id="paste-validation" className="validation-message" role="alert">{pasteError}</p>}
+            <div className="paste-actions">
+              <button className="secondary-button" type="button" onClick={() => setPasteOpen(false)}>
+                Cancel
+              </button>
+              <button className="primary-button compact-button" type="button" onClick={splitPastedThoughts}>
+                Split into thoughts
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="draft-list">
           {drafts.map((draft, index) => {
             const inputId = `thought-input-${draft.id}`;

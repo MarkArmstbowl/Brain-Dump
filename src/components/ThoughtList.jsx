@@ -13,10 +13,15 @@ export default function ThoughtList({
   onCancelEdit,
   onSave,
   onDelete,
-  onMove
+  onReorder,
+  aiStates,
+  onRequestSuggestion,
+  onAcceptSuggestion,
+  onOverrideSuggestion
 }) {
   const [draggedThoughtId, setDraggedThoughtId] = useState(null);
   const [dropTargetCategory, setDropTargetCategory] = useState(null);
+  const [dropTargetThoughtId, setDropTargetThoughtId] = useState(null);
 
   if (thoughts.length === 0) {
     return (
@@ -26,7 +31,7 @@ export default function ThoughtList({
         <p>
           {hasAnyThoughts
             ? "Choose another filter or add a new thought."
-            : "No thoughts here yet. Add your first one above."}
+            : "No thoughts here yet. Capture your first one in the Capture tab."}
         </p>
       </div>
     );
@@ -41,29 +46,51 @@ export default function ThoughtList({
   function finishDragging() {
     setDraggedThoughtId(null);
     setDropTargetCategory(null);
+    setDropTargetThoughtId(null);
   }
 
-  function dropThought(event, category) {
+  function dropAtEnd(event, category) {
     event.preventDefault();
     const thoughtId = event.dataTransfer.getData("text/plain") || draggedThoughtId;
-    if (thoughtId) onMove(thoughtId, category);
+    if (thoughtId) onReorder(thoughtId, category);
     finishDragging();
   }
 
-  function renderThoughtCards(categoryThoughts, dragEnabled = false) {
+  function dropBeforeThought(event, category, beforeId) {
+    event.preventDefault();
+    event.stopPropagation();
+    const thoughtId = event.dataTransfer.getData("text/plain") || draggedThoughtId;
+    if (thoughtId) onReorder(thoughtId, category, beforeId);
+    finishDragging();
+  }
+
+  function renderThoughtCards(categoryThoughts, dragEnabled = false, category = null) {
     return categoryThoughts.map((thought) => (
       <ThoughtCard
         key={`${thought.id}-${editingId === thought.id ? "edit" : "view"}`}
         thought={thought}
         isEditing={editingId === thought.id}
         isDragging={draggedThoughtId === thought.id}
+        isDropTarget={dropTargetThoughtId === thought.id}
         dragEnabled={dragEnabled && editingId !== thought.id}
         onDragStart={(event) => startDragging(event, thought.id)}
         onDragEnd={finishDragging}
+        onDragEnter={() => {
+          if (draggedThoughtId !== thought.id) {
+            setDropTargetCategory(category);
+            setDropTargetThoughtId(thought.id);
+          }
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => dropBeforeThought(event, category, thought.id)}
         onEdit={() => onEdit(thought.id)}
         onCancel={onCancelEdit}
         onSave={onSave}
         onDelete={onDelete}
+        aiState={aiStates[thought.id]}
+        onRequestSuggestion={() => onRequestSuggestion(thought.id)}
+        onAcceptSuggestion={(suggestedCategory) => onAcceptSuggestion(thought.id, suggestedCategory)}
+        onOverrideSuggestion={(chosenCategory) => onOverrideSuggestion(thought.id, chosenCategory)}
       />
     ));
   }
@@ -73,7 +100,7 @@ export default function ThoughtList({
       <>
         <p className="drag-instruction">
           <span aria-hidden="true">⠿</span>
-          <span className="desktop-drag-copy">Drag a card into another column to move it.</span>
+          <span className="desktop-drag-copy">Drag cards within a column to reorder them, or into another column to move them.</span>
           <span className="mobile-drag-copy">Swipe to see each category. Use Edit to move a card.</span>
         </p>
         <div className="category-groups" aria-label="Thoughts grouped by category">
@@ -89,9 +116,14 @@ export default function ThoughtList({
                 key={category.value}
                 className={`category-group category-group-${category.value}${isDropTarget ? " is-drop-target" : ""}`}
                 aria-labelledby={headingId}
-                onDragEnter={() => setDropTargetCategory(category.value)}
+                onDragEnter={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setDropTargetCategory(category.value);
+                    setDropTargetThoughtId(null);
+                  }
+                }}
                 onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => dropThought(event, category.value)}
+                onDrop={(event) => dropAtEnd(event, category.value)}
               >
                 <header className="category-group-heading">
                   <span className={`category-group-dot category-group-dot-${category.value}`} aria-hidden="true" />
@@ -99,7 +131,7 @@ export default function ThoughtList({
                 </header>
                 {categoryThoughts.length > 0 ? (
                   <ul className="thought-list group-thought-list">
-                    {renderThoughtCards(categoryThoughts, true)}
+                    {renderThoughtCards(categoryThoughts, true, category.value)}
                   </ul>
                 ) : (
                   <p className="category-group-empty">

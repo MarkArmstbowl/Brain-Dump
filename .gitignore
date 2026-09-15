@@ -1,4 +1,4 @@
-# Local environment files (the current app needs no environment variables)
+# Local secrets and environment overrides
 .env
 .env.*
 !.env.example
