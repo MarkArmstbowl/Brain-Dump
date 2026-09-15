@@ -27,13 +27,13 @@ export default function App() {
     setAnnouncement(message);
   }
 
-  function handleAddThought(text, category) {
-    const nextThoughts = [
-      ...thoughts,
-      { id: crypto.randomUUID(), text, category }
-    ];
+  function handleAddThoughts(newThoughts) {
+    const nextThoughts = [...thoughts, ...newThoughts];
     setActiveFilter("all");
-    commitThoughts(nextThoughts, "Thought added.");
+    commitThoughts(
+      nextThoughts,
+      `${newThoughts.length} ${newThoughts.length === 1 ? "thought" : "thoughts"} added.`
+    );
   }
 
   function handleSaveThought(id, text, category) {
@@ -53,6 +53,19 @@ export default function App() {
       setEditingId(null);
     }
     commitThoughts(nextThoughts, "Thought deleted.");
+  }
+
+  function handleMoveThought(id, category) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category === category) return;
+
+    const nextThoughts = thoughts.map((item) =>
+      item.id === id ? { ...item, category } : item
+    );
+    commitThoughts(
+      nextThoughts,
+      `Thought moved to ${CATEGORY_LABELS[category]}.`
+    );
   }
 
   function handleFilterChange(value, label) {
@@ -77,7 +90,7 @@ export default function App() {
 
       <div className="workspace">
         <aside className="capture-column" aria-label="Capture a thought">
-          <ThoughtComposer onAddThought={handleAddThought} />
+          <ThoughtComposer onAddThoughts={handleAddThoughts} />
           {storageError && <p className="error-message" role="alert">{storageError}</p>}
           <p className="privacy-note">
             <span aria-hidden="true">●</span>
@@ -100,11 +113,13 @@ export default function App() {
           <ThoughtList
             thoughts={visibleThoughts}
             hasAnyThoughts={thoughts.length > 0}
+            grouped={activeFilter === "all"}
             editingId={editingId}
             onEdit={setEditingId}
             onCancelEdit={() => setEditingId(null)}
             onSave={handleSaveThought}
             onDelete={handleDeleteThought}
+            onMove={handleMoveThought}
           />
         </section>
       </div>

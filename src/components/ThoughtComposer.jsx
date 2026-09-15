@@ -1,70 +1,156 @@
 import { useRef, useState } from "react";
 import CategorySelect from "./CategorySelect";
 
-export default function ThoughtComposer({ onAddThought }) {
-  const [text, setText] = useState("");
-  const [category, setCategory] = useState("unsorted");
-  const [validationMessage, setValidationMessage] = useState("");
-  const inputRef = useRef(null);
+function createDraft() {
+  return {
+    id: crypto.randomUUID(),
+    text: "",
+    category: "unsorted"
+  };
+}
+
+export default function ThoughtComposer({ onAddThoughts }) {
+  const [drafts, setDrafts] = useState(() => [createDraft()]);
+  const [validationErrors, setValidationErrors] = useState({});
+  const inputRefs = useRef([]);
+
+  function updateDraft(id, changes) {
+    setDrafts((currentDrafts) =>
+      currentDrafts.map((draft) =>
+        draft.id === id ? { ...draft, ...changes } : draft
+      )
+    );
+    setValidationErrors((currentErrors) => {
+      if (!currentErrors[id]) return currentErrors;
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[id];
+      return nextErrors;
+    });
+  }
+
+  function addDraft() {
+    const nextDraft = createDraft();
+    setDrafts((currentDrafts) => [...currentDrafts, nextDraft]);
+    requestAnimationFrame(() => {
+      inputRefs.current[nextDraft.id]?.focus();
+    });
+  }
+
+  function removeDraft(id) {
+    setDrafts((currentDrafts) =>
+      currentDrafts.filter((draft) => draft.id !== id)
+    );
+    setValidationErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[id];
+      return nextErrors;
+    });
+  }
 
   function handleSubmit(event) {
     event.preventDefault();
-    const trimmedText = text.trim();
+    const nextErrors = {};
 
-    if (!trimmedText) {
-      setValidationMessage("Please write a thought first.");
-      inputRef.current?.focus();
+    drafts.forEach((draft) => {
+      if (!draft.text.trim()) {
+        nextErrors[draft.id] = "Please write a thought or remove this row.";
+      }
+    });
+
+    if (Object.keys(nextErrors).length > 0) {
+      setValidationErrors(nextErrors);
+      const firstInvalidId = drafts.find((draft) => nextErrors[draft.id])?.id;
+      inputRefs.current[firstInvalidId]?.focus();
       return;
     }
 
-    onAddThought(trimmedText, category);
-    setText("");
-    setCategory("unsorted");
-    setValidationMessage("");
-    inputRef.current?.focus();
+    onAddThoughts(
+      drafts.map((draft) => ({ ...draft, text: draft.text.trim() }))
+    );
+    const emptyDraft = createDraft();
+    setDrafts([emptyDraft]);
+    setValidationErrors({});
+    requestAnimationFrame(() => {
+      inputRefs.current[emptyDraft.id]?.focus();
+    });
   }
 
   return (
-    <section className="composer" aria-label="Add a thought">
-      <form onSubmit={handleSubmit}>
-        <label id="thought-label" htmlFor="thought-input">
-          What's on your mind?
-        </label>
-        <textarea
-          ref={inputRef}
-          id="thought-input"
-          name="thought"
-          rows="4"
-          value={text}
-          onChange={(event) => {
-            setText(event.target.value);
-            setValidationMessage("");
-          }}
-          placeholder="Start anywhere. It doesn't have to be perfectly worded."
-          aria-describedby={validationMessage ? "thought-validation" : undefined}
-        />
-        {validationMessage && (
-          <p id="thought-validation" className="validation-message" role="alert">
-            {validationMessage}
-          </p>
-        )}
+    <section className="composer" aria-labelledby="composer-heading">
+      <div className="composer-heading">
+        <div>
+          <p className="section-kicker">QUICK CAPTURE</p>
+          <h2 id="composer-heading">What's on your mind?</h2>
+        </div>
+        <p>Each thought can go somewhere different.</p>
+      </div>
 
-        <div className="category-field">
-          <div>
-            <label htmlFor="category-input">Where does it belong?</label>
-            <p>You can always change this later.</p>
-          </div>
-          <CategorySelect
-            id="category-input"
-            value={category}
-            onChange={setCategory}
-          />
+      <form onSubmit={handleSubmit}>
+        <div className="draft-list">
+          {drafts.map((draft, index) => {
+            const inputId = `thought-input-${draft.id}`;
+            const categoryId = `thought-category-${draft.id}`;
+            const errorId = `${inputId}-validation`;
+
+            return (
+              <div className="draft-row" key={draft.id}>
+                <span className="draft-number" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="draft-text-field">
+                  <label className="sr-only" htmlFor={inputId}>
+                    Thought {index + 1}
+                  </label>
+                  <textarea
+                    ref={(element) => {
+                      inputRefs.current[draft.id] = element;
+                    }}
+                    id={inputId}
+                    className="draft-textarea"
+                    rows="2"
+                    value={draft.text}
+                    onChange={(event) =>
+                      updateDraft(draft.id, { text: event.target.value })
+                    }
+                    placeholder={index === 0 ? "Start anywhere. It doesn't have to be perfectly worded." : "Another thought..."}
+                    aria-describedby={validationErrors[draft.id] ? errorId : undefined}
+                  />
+                  {validationErrors[draft.id] && (
+                    <p id={errorId} className="validation-message" role="alert">
+                      {validationErrors[draft.id]}
+                    </p>
+                  )}
+                </div>
+                <div className="draft-category-field">
+                  <label htmlFor={categoryId}>Category</label>
+                  <CategorySelect
+                    id={categoryId}
+                    value={draft.category}
+                    onChange={(category) => updateDraft(draft.id, { category })}
+                  />
+                </div>
+                {drafts.length > 1 && (
+                  <button
+                    className="remove-draft-button"
+                    type="button"
+                    onClick={() => removeDraft(draft.id)}
+                    aria-label={`Remove thought ${index + 1}`}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="composer-footer">
-          <p>One thought is a good place to start.</p>
-          <button className="primary-button" type="submit">
-            Add Thought <span aria-hidden="true">＋</span>
+          <button className="add-draft-button" type="button" onClick={addDraft}>
+            <span aria-hidden="true">＋</span> Add another thought
+          </button>
+          <button className="primary-button submit-thoughts-button" type="submit">
+            Add {drafts.length > 1 ? `${drafts.length} Thoughts` : "Thought"}
+            <span aria-hidden="true">→</span>
           </button>
         </div>
       </form>

@@ -2,7 +2,18 @@ import { useState } from "react";
 import { CATEGORY_LABELS } from "../constants";
 import CategorySelect from "./CategorySelect";
 
-export default function ThoughtCard({ thought, isEditing, onEdit, onCancel, onSave, onDelete }) {
+export default function ThoughtCard({
+  thought,
+  isEditing,
+  isDragging,
+  dragEnabled,
+  onDragStart,
+  onDragEnd,
+  onEdit,
+  onCancel,
+  onSave,
+  onDelete
+}) {
   const [draftText, setDraftText] = useState(thought.text);
   const [draftCategory, setDraftCategory] = useState(thought.category);
   const [validationMessage, setValidationMessage] = useState("");
@@ -64,12 +75,22 @@ export default function ThoughtCard({ thought, isEditing, onEdit, onCancel, onSa
   }
 
   return (
-    <li className={`thought-card thought-card-${thought.category}`}>
+    <li
+      className={`thought-card thought-card-${thought.category}${isDragging ? " is-dragging" : ""}`}
+      draggable={dragEnabled}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
       <div className="thought-card-header">
         <span className={`category-badge category-${thought.category}`}>
           <span className="category-dot" aria-hidden="true" />
           {CATEGORY_LABELS[thought.category]}
         </span>
+        {dragEnabled && (
+          <span className="drag-handle" aria-hidden="true" title="Drag to another category">
+            ⠿
+          </span>
+        )}
       </div>
       <p className="thought-text">{thought.text}</p>
       <div className="thought-actions">
