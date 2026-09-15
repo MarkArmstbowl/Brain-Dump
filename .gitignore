@@ -14,6 +14,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 node_modules/
+dist/
 artifacts/
 test-results/
 playwright-report/

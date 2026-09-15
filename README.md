@@ -1,12 +1,12 @@
 # Brain Dump
 
-A small web app for capturing thoughts when your mind feels full. Built for an Agile Methods class using HTML, CSS, and vanilla JavaScript.
+A small React web app for capturing and organizing thoughts when your mind feels full. Built as an Agile Methods class project.
 
 **Product vision:** To help overwhelmed people clear their mental clutter, regain a sense of control, and focus on what truly matters, one manageable step at a time.
 
-## Current Sprint Goal
+## Current Increment
 
-Enable users to quickly capture and manage the thoughts currently on their mind.
+The working increment lets users capture and manage thoughts, assign them to **Unsorted**, **Do**, **Decide**, or **Let Go**, and filter the current dump by category.
 
 ## Current features
 
@@ -21,15 +21,27 @@ Changes are saved using browser `localStorage` and persist after refreshing. Dat
 
 ## Run locally
 
-From this project's folder, run:
+Install the dependencies once:
 
 ```sh
-python3 -m http.server 8000
+npm install
 ```
 
-Then visit [http://localhost:8000](http://localhost:8000) in a modern browser. Press `Ctrl+C` in the terminal to stop the server.
+Then start the development server:
 
-Python serves the static files only; the application has no backend. No package installation, build step, API keys, or `.env` file is needed.
+```sh
+npm run dev
+```
+
+Open the local URL printed in the terminal. Press `Ctrl+C` to stop the server.
+
+To verify a production build:
+
+```sh
+npm run build
+```
+
+The application uses React and Vite but still has no backend, external API, API keys, or database. Thoughts remain in browser `localStorage`.
 
 ## Sprint Review demo / acceptance check
 
@@ -50,9 +62,11 @@ Also check that blank entries cannot be added or saved, Cancel preserves the ori
 
 ## Files and release scope
 
-- `index.html`: Page structure and input form.
-- `styles.css`: Responsive page and card styles.
-- `app.js`: Add, view, edit, delete, and browser storage.
+- `index.html`: Vite entry page.
+- `src/App.jsx`: Application state and feature coordination.
+- `src/components/`: Forms, filters, list, and thought cards.
+- `src/storage/thoughtStorage.js`: Compatible localStorage loading and saving.
+- `src/styles.css`: Responsive page and component styles.
 - `.gitignore`: Excludes local configuration and generated files.
 
-This increment adds lightweight Do / Decide / Let Go organization. AI, prioritization, next-step recommendations, accounts, history, reflection, reminders, wellness resources, backend APIs, and databases remain outside the project scope.
+AI, prioritization, next-step recommendations, accounts, history, reflection, reminders, wellness resources, backend APIs, and databases are not part of the current increment.
