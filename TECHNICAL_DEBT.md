@@ -4,9 +4,11 @@ Assessed after completing the current sprint increment through Version 2 item 8.
 
 ## How the assessment was produced
 
-The AI review prompt was:
+The AI review was asked these three questions:
 
-> Inspect every source file. Identify each major code segment that reflects spaghetti code, inefficient loops, inefficient nested conditionals, SOLID or clean-code violations, missing tests, and security weaknesses. Do not invent findings. Estimate the manual repair effort and cost of the three most significant code-quality offenses. Identify separate backlog items for security hardening, including injection and common web attack risks, and give each item testable acceptance criteria.
+1. **Code smells:** Identify each major code segment that reflects spaghetti code, inefficient loops, inefficiently nested if/then logic, SOLID violations, clean-code violations, and other significant code smells. Do not invent findings.
+2. **Human repair cost:** Identify the effort and monetary cost of a human repairing the top three code offenses by hand.
+3. **Security hardening:** Identify opportunities to harden the code and UI against SQL injection and other known attack methods, then classify each unresolved vulnerability as a separate Product Backlog item with testable acceptance criteria.
 
 The review then checked the findings against the actual React, Vite middleware, localStorage, and Groq request paths. There is no SQL query or database layer, so SQL injection does not currently apply. React renders thought text as escaped text, which reduces direct stored-XSS exposure.
 
@@ -33,8 +35,8 @@ Estimate assumes one engineer working manually at **$75/hour**, including focuse
 | --- | --- | ---: | ---: |
 | 1 | Split `ThoughtCard` into focused view, edit, and AI-suggestion components while preserving behavior. | 6–10 hours | $450–$750 |
 | 2 | Move thought operations and AI request state from `App` into a reducer or focused hooks, with tests for each transition. | 5–8 hours | $375–$600 |
-| 3 | Add durable browser tests for paste, reorder, cross-category moves, AI accept/override, errors, and persistence. | 8–14 hours | $600–$1,050 |
-|  | **Total** | **19–32 hours** | **$1,425–$2,400** |
+| 3 | Separate list rendering from drag/drop coordination and isolate the array reorder operation while preserving saved order. | 4–7 hours | $300–$525 |
+|  | **Total** | **15–25 hours** | **$1,125–$1,875** |
 
 ## Proposed force-ranked Product Backlog cards
 
@@ -80,19 +82,25 @@ Estimate assumes one engineer working manually at **$75/hour**, including focuse
 
 **Acceptance criteria:** Separate display/actions, edit form, and AI suggestion UI into focused components with clear props and unchanged Sprint Review behavior.
 
-### 8. SEC: Add production HTTP security controls
+### 8. SEC: Validate the request origin for the AI endpoint
 
-**Risk:** Vite is sufficient for a local demo, but a deployed service still needs origin checks, HTTPS, security headers, and a deliberate API exposure policy.
+**Risk:** The local endpoint does not explicitly verify the request origin. A deployed version needs a deliberate same-origin policy and protection against cross-site request abuse.
 
-**Acceptance criteria:** Document the supported deployment, require HTTPS, restrict allowed origins, and set CSP, frame, content-type, and referrer protections.
+**Acceptance criteria:** Reject unexpected origins, document the allowed origin policy, and test accepted same-origin and rejected cross-origin requests.
 
-### 9. TD: Limit pasted batch size and stored thought size
+### 9. SEC: Add HTTPS and production security headers
+
+**Risk:** Vite is sufficient for a local demo, but a deployed service still needs HTTPS and browser security headers.
+
+**Acceptance criteria:** Document the supported deployment, require HTTPS, and set CSP, frame, content-type, and referrer protections.
+
+### 10. TD: Limit pasted batch size and stored thought size
 
 **Risk:** An extremely large paste can create excessive DOM nodes or exceed browser storage.
 
 **Acceptance criteria:** Define and enforce per-thought and per-batch limits before creating rows; provide a clear message without losing the pasted text.
 
-### 10. TD: Separate the AI route from Vite for deployable environments
+### 11. TD: Separate the AI route from Vite for deployable environments
 
 **Risk:** The server middleware works in Vite dev and preview, but static hosting alone cannot run it.
 

@@ -6,7 +6,7 @@ A small React web app for capturing and organizing thoughts when your mind feels
 
 ## Current Sprint Goal
 
-Enable users to rapidly capture and arrange a brain dump, then use AI category suggestions to organize their thoughts faster while keeping control of the final category.
+Enable users to organize a larger brain dump faster by pasting and reordering multiple thoughts and using AI category suggestions they can accept or override.
 
 ## Version 1 features
 
