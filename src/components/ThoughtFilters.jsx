@@ -10,7 +10,7 @@ export default function ThoughtFilters({ activeFilter, onChange }) {
         return (
           <button
             key={filter.value}
-            className={`filter-button${isActive ? " is-active" : ""}`}
+            className={`filter-button filter-${filter.value}${isActive ? " is-active" : ""}`}
             type="button"
             aria-pressed={isActive}
             onClick={() => onChange(filter.value, filter.label)}

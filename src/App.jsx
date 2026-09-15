@@ -64,12 +64,13 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="page-header">
-        <span className="brand-mark" aria-hidden="true">b.</span>
-        <div className="header-copy">
-          <p className="eyebrow">A QUIET PLACE FOR BUSY MINDS</p>
+        <p className="eyebrow">A QUIET PLACE FOR BUSY MINDS</p>
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true">b.</span>
           <h1>Brain Dump</h1>
-          <p className="subtitle">Clear your mind, one thought at a time.</p>
         </div>
+        <p className="subtitle">Clear your mind, one thought at a time.</p>
+        <span className="header-flourish" aria-hidden="true"><i />✦<i /></span>
       </header>
 
       <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
