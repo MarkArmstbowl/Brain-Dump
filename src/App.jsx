@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CATEGORY_LABELS } from "./constants";
 import { getCategorySuggestion } from "./api/categorySuggestion";
 import ThoughtComposer from "./components/ThoughtComposer";
@@ -15,6 +15,7 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const [aiStates, setAiStates] = useState({});
+  const aiRequestVersions = useRef({});
 
   const visibleThoughts = useMemo(
     () =>
@@ -91,6 +92,7 @@ export default function App() {
   }
 
   function clearAiState(id) {
+    aiRequestVersions.current[id] = (aiRequestVersions.current[id] || 0) + 1;
     setAiStates((currentStates) => {
       if (!currentStates[id]) return currentStates;
       const nextStates = { ...currentStates };
@@ -102,6 +104,8 @@ export default function App() {
   async function handleRequestSuggestion(id) {
     const thought = thoughts.find((item) => item.id === id);
     if (!thought) return;
+    const requestVersion = (aiRequestVersions.current[id] || 0) + 1;
+    aiRequestVersions.current[id] = requestVersion;
 
     setAiStates((currentStates) => ({
       ...currentStates,
@@ -110,12 +114,14 @@ export default function App() {
 
     try {
       const suggestion = await getCategorySuggestion(thought.text);
+      if (aiRequestVersions.current[id] !== requestVersion) return;
       setAiStates((currentStates) => ({
         ...currentStates,
         [id]: { loading: false, suggestion, error: "" }
       }));
       setAnnouncement(`AI suggested ${CATEGORY_LABELS[suggestion.category]}.`);
     } catch (error) {
+      if (aiRequestVersions.current[id] !== requestVersion) return;
       setAiStates((currentStates) => ({
         ...currentStates,
         [id]: { loading: false, suggestion: null, error: error.message }
@@ -178,6 +184,7 @@ export default function App() {
       </header>
 
       <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
+      {storageError && <p className="error-message" role="alert">{storageError}</p>}
 
       <nav className="view-navigation" aria-label="Brain Dump sections">
         <div className="view-tabs" role="tablist" aria-label="Capture and organize">
@@ -230,7 +237,6 @@ export default function App() {
             <span className="ambient-spark ambient-spark-two" aria-hidden="true">✧</span>
             <ThoughtComposer onAddThoughts={handleAddThoughts} />
           </div>
-          {storageError && <p className="error-message" role="alert">{storageError}</p>}
           <div className="capture-aftercare">
             <p className="privacy-note">
               <span aria-hidden="true">●</span>
