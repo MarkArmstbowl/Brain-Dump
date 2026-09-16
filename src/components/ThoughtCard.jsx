@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import TextField from "@mui/material/TextField";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { CATEGORIES, CATEGORY_LABELS } from "../constants";
 import CategorySelect from "./CategorySelect";
 
@@ -48,40 +56,37 @@ export default function ThoughtCard({
     return (
       <li className="thought-card thought-card-editing">
         <form onSubmit={handleSave}>
-          <label htmlFor={inputId}>Edit thought</label>
-          <textarea
+          <TextField
             id={inputId}
-            rows="3"
+            label="Edit thought"
+            multiline
+            minRows={3}
             value={draftText}
             autoFocus
             onChange={(event) => {
               setDraftText(event.target.value);
               setValidationMessage("");
             }}
-            aria-describedby={validationMessage ? `${inputId}-validation` : undefined}
+            error={Boolean(validationMessage)}
+            helperText={validationMessage ?? " "}
           />
-          {validationMessage && (
-            <p id={`${inputId}-validation`} className="validation-message" role="alert">
-              {validationMessage}
-            </p>
-          )}
 
           <div className="edit-category-field">
-            <label htmlFor={categoryId}>Category</label>
             <CategorySelect
               id={categoryId}
               value={draftCategory}
               onChange={setDraftCategory}
+              label="Category"
             />
           </div>
 
           <div className="thought-actions">
-            <button className="secondary-button" type="button" onClick={onCancel}>
+            <Button variant="outlined" size="small" onClick={onCancel}>
               Cancel
-            </button>
-            <button className="primary-button compact-button" type="submit">
+            </Button>
+            <Button variant="contained" size="small" type="submit">
               Save changes
-            </button>
+            </Button>
           </div>
         </form>
       </li>
@@ -104,24 +109,34 @@ export default function ThoughtCard({
           {CATEGORY_LABELS[thought.category]}
         </span>
         {dragEnabled && (
-          <span className="drag-handle" aria-hidden="true" title="Drag to another category">
-            ⠿
-          </span>
+          <DragIndicatorRoundedIcon
+            className="drag-handle"
+            aria-hidden="true"
+            titleAccess="Drag to another category"
+            fontSize="small"
+          />
         )}
       </div>
       <p className="thought-text">{thought.text}</p>
 
       <div className="ai-category-tools">
         {!aiState?.suggestion && (
-          <button
-            className="ai-suggest-button"
-            type="button"
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={
+              aiState?.loading ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <AutoAwesomeRoundedIcon fontSize="small" />
+              )
+            }
             disabled={aiState?.loading}
             onClick={onRequestSuggestion}
+            className="ai-suggest-button"
           >
-            <span aria-hidden="true">✦</span>
             {aiState?.loading ? "Thinking…" : "Suggest category"}
-          </button>
+          </Button>
         )}
 
         {aiState?.error && (
@@ -131,71 +146,84 @@ export default function ThoughtCard({
         {aiState?.suggestion && (
           <div className="ai-suggestion" aria-label="AI category suggestion">
             <p className="ai-suggestion-label">
-              <span aria-hidden="true">✦</span> AI suggests <strong>{CATEGORY_LABELS[aiState.suggestion.category]}</strong>
+              <AutoAwesomeRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                sx={{ fontSize: "0.95em", mr: 0.5, verticalAlign: "text-bottom", color: "#aa8947" }}
+              />
+              AI suggests <strong>{CATEGORY_LABELS[aiState.suggestion.category]}</strong>
             </p>
 
             {!showOverride ? (
               <div className="ai-suggestion-actions">
-                <button
-                  className="accept-suggestion-button"
-                  type="button"
+                <Button
+                  variant="contained"
+                  size="small"
                   onClick={() => onAcceptSuggestion(aiState.suggestion.category)}
+                  className="accept-suggestion-button"
                 >
                   Accept suggestion
-                </button>
-                <button
-                  className="override-suggestion-button"
-                  type="button"
+                </Button>
+                <Button
+                  variant="text"
+                  size="small"
                   onClick={() => {
                     setOverrideCategory(thought.category);
                     setShowOverride(true);
                   }}
+                  className="override-suggestion-button"
                 >
                   Choose another
-                </button>
+                </Button>
               </div>
             ) : (
-              <div className="override-controls">
-                <label htmlFor={`override-category-${thought.id}`}>Your category</label>
-                <select
+              <Box className="override-controls">
+                <CategorySelect
                   id={`override-category-${thought.id}`}
-                  className="category-select"
+                  label="Your category"
                   value={overrideCategory}
-                  onChange={(event) => setOverrideCategory(event.target.value)}
-                >
-                  {CATEGORIES.map((category) => (
-                    <option key={category.value} value={category.value}>{category.label}</option>
-                  ))}
-                </select>
+                  onChange={setOverrideCategory}
+                />
                 {overrideCategory === aiState.suggestion.category && (
                   <p className="override-help">Choose a category different from the AI suggestion.</p>
                 )}
                 <div className="override-actions">
-                  <button className="secondary-button" type="button" onClick={() => setShowOverride(false)}>
+                  <Button variant="outlined" size="small" onClick={() => setShowOverride(false)}>
                     Back
-                  </button>
-                  <button
-                    className="primary-button compact-button"
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
                     disabled={overrideCategory === aiState.suggestion.category}
                     onClick={() => onOverrideSuggestion(overrideCategory)}
                   >
                     Use my choice
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Box>
             )}
           </div>
         )}
       </div>
 
       <div className="thought-actions">
-        <button className="secondary-button" type="button" onClick={onEdit}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<EditRoundedIcon fontSize="small" />}
+          onClick={onEdit}
+        >
           Edit
-        </button>
-        <button className="delete-button" type="button" onClick={() => onDelete(thought.id)}>
+        </Button>
+        <Button
+          variant="text"
+          color="error"
+          size="small"
+          startIcon={<DeleteOutlineRoundedIcon fontSize="small" />}
+          onClick={() => onDelete(thought.id)}
+        >
           Delete
-        </button>
+        </Button>
       </div>
     </li>
   );

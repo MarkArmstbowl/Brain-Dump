@@ -1,10 +1,62 @@
 import { useMemo, useRef, useState } from "react";
+import Badge from "@mui/material/Badge";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { CATEGORY_LABELS } from "./constants";
 import { getCategorySuggestion } from "./api/categorySuggestion";
 import ThoughtComposer from "./components/ThoughtComposer";
 import ThoughtFilters from "./components/ThoughtFilters";
 import ThoughtList from "./components/ThoughtList";
 import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
+
+function TabNumberBadge({ children }) {
+  return (
+    <Box
+      component="span"
+      aria-hidden="true"
+      sx={{
+        font: "700 9px/1 Georgia, serif",
+        letterSpacing: "0.08em",
+        color: "inherit",
+        opacity: 0.7,
+        ".Mui-selected &": { opacity: 0.8 }
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function TabCountBadge({ count }) {
+  return (
+    <Badge
+      badgeContent={count}
+      aria-label={`${count} thoughts`}
+      sx={{
+        ml: 1,
+        "& .MuiBadge-badge": {
+          minWidth: 22,
+          height: 22,
+          padding: "0 6px",
+          borderRadius: 999,
+          backgroundColor: "#e5ece1",
+          color: "#4c604f",
+          fontSize: 10,
+          fontWeight: 700,
+          position: "static",
+          transform: "none",
+          ".Mui-selected &": {
+            backgroundColor: "rgba(255, 255, 255, 0.14)",
+            color: "#ffffff"
+          }
+        }
+      }}
+    />
+  );
+}
 
 export default function App() {
   const [initialData] = useState(loadThoughts);
@@ -158,15 +210,6 @@ export default function App() {
     setAnnouncement(view === "capture" ? "Capture view opened." : "Organize view opened.");
   }
 
-  function handleTabKeyDown(event, currentView) {
-    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
-
-    event.preventDefault();
-    const nextView = currentView === "capture" ? "organize" : "capture";
-    switchView(nextView);
-    requestAnimationFrame(() => document.getElementById(`${nextView}-tab`)?.focus());
-  }
-
   return (
     <main className="app-shell">
       <header className="page-header">
@@ -187,37 +230,37 @@ export default function App() {
       {storageError && <p className="error-message" role="alert">{storageError}</p>}
 
       <nav className="view-navigation" aria-label="Brain Dump sections">
-        <div className="view-tabs" role="tablist" aria-label="Capture and organize">
-          <button
+        <Tabs
+          value={activeView}
+          onChange={(_event, value) => switchView(value)}
+          aria-label="Capture and organize"
+          className="view-tabs"
+          selectionFollowsFocus
+        >
+          <Tab
+            value="capture"
             id="capture-tab"
-            className={`view-tab${activeView === "capture" ? " is-active" : ""}`}
-            type="button"
-            role="tab"
-            aria-selected={activeView === "capture"}
             aria-controls="capture-panel"
-            tabIndex={activeView === "capture" ? 0 : -1}
-            onClick={() => switchView("capture")}
-            onKeyDown={(event) => handleTabKeyDown(event, "capture")}
-          >
-            <span className="view-tab-number" aria-hidden="true">01</span>
-            Capture
-          </button>
-          <button
+            label={
+              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                <TabNumberBadge>01</TabNumberBadge>
+                Capture
+              </Box>
+            }
+          />
+          <Tab
+            value="organize"
             id="organize-tab"
-            className={`view-tab${activeView === "organize" ? " is-active" : ""}`}
-            type="button"
-            role="tab"
-            aria-selected={activeView === "organize"}
             aria-controls="organize-panel"
-            tabIndex={activeView === "organize" ? 0 : -1}
-            onClick={() => switchView("organize")}
-            onKeyDown={(event) => handleTabKeyDown(event, "organize")}
-          >
-            <span className="view-tab-number" aria-hidden="true">02</span>
-            Organize
-            <span className="view-tab-count" aria-label={`${thoughts.length} thoughts`}>{thoughts.length}</span>
-          </button>
-        </div>
+            label={
+              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                <TabNumberBadge>02</TabNumberBadge>
+                Organize
+                <TabCountBadge count={thoughts.length} />
+              </Box>
+            }
+          />
+        </Tabs>
       </nav>
 
       <div className="workspace">
@@ -243,10 +286,14 @@ export default function App() {
               Thoughts stay in this browser unless you request an AI suggestion.
             </p>
             {thoughts.length > 0 && (
-              <button className="review-dump-button" type="button" onClick={() => switchView("organize")}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => switchView("organize")}
+                endIcon={<ArrowForwardRoundedIcon fontSize="small" />}
+              >
                 Organize {thoughts.length} {thoughts.length === 1 ? "thought" : "thoughts"}
-                <span aria-hidden="true">→</span>
-              </button>
+              </Button>
             )}
           </div>
         </section>
