@@ -235,6 +235,7 @@ export default function App() {
           onChange={(_event, value) => switchView(value)}
           aria-label="Capture and organize"
           className="view-tabs"
+          selectionFollowsFocus
         >
           <Tab
             value="capture"

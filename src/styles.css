@@ -324,7 +324,10 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
   .subtitle { font-size: 12px; }
   .header-flourish { margin-top: 5px; }
   .view-navigation { margin-bottom: 19px; }
-  .view-tabs.MuiTabs-root { display: grid; width: 100%; grid-template-columns: 1fr 1fr; padding: 5px; }
+  .view-tabs.MuiTabs-root { width: 100%; padding: 5px; }
+  .view-tabs .MuiTabs-scroller { overflow: visible; }
+  .view-tabs .MuiTabs-flexContainer { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .view-tabs .MuiTab-root { min-width: 0; padding-inline: 10px; }
   .composer { padding: 21px; border-radius: 18px; }
   .composer-footer { align-items: stretch; flex-direction: column; }
   .dump-section { padding: 19px 15px; border-radius: 21px; }
