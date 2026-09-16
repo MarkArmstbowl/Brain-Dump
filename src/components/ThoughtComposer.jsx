@@ -1,4 +1,11 @@
 import { useRef, useState } from "react";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ContentPasteGoRoundedIcon from "@mui/icons-material/ContentPasteGoRounded";
 import CategorySelect from "./CategorySelect";
 
 function createDraft() {
@@ -109,44 +116,48 @@ export default function ThoughtComposer({ onAddThoughts }) {
 
       <form onSubmit={handleSubmit}>
         <div className="capture-tools">
-          <button
-            className="paste-toggle-button"
-            type="button"
+          <Button
+            variant="outlined"
+            size="small"
             aria-expanded={pasteOpen}
+            startIcon={<ContentPasteGoRoundedIcon fontSize="small" />}
             onClick={() => {
               setPasteOpen((isOpen) => !isOpen);
               setPasteError("");
             }}
           >
-            <span aria-hidden="true">☷</span> Paste multiple thoughts
-          </button>
+            Paste multiple thoughts
+          </Button>
           <p>One thought per line. Review them before adding.</p>
         </div>
 
         {pasteOpen && (
           <div className="paste-panel">
-            <label htmlFor="paste-thoughts">Paste your list</label>
-            <textarea
+            <TextField
               id="paste-thoughts"
-              rows="5"
-              value={pastedText}
+              label="Paste your list"
+              multiline
+              minRows={5}
               autoFocus
+              value={pastedText}
               placeholder={"Finish the Agile assignment\nEmail the professor\nBook a dentist appointment"}
               onChange={(event) => {
                 setPastedText(event.target.value);
                 setPasteError("");
               }}
-              aria-describedby={pasteError ? "paste-validation" : "paste-help"}
+              error={Boolean(pasteError)}
+              helperText={
+                pasteError ??
+                "Bullets and numbered-list prefixes are removed automatically."
+              }
             />
-            <p id="paste-help" className="field-help">Bullets and numbered-list prefixes are removed automatically.</p>
-            {pasteError && <p id="paste-validation" className="validation-message" role="alert">{pasteError}</p>}
             <div className="paste-actions">
-              <button className="secondary-button" type="button" onClick={() => setPasteOpen(false)}>
+              <Button variant="outlined" size="small" onClick={() => setPasteOpen(false)}>
                 Cancel
-              </button>
-              <button className="primary-button compact-button" type="button" onClick={splitPastedThoughts}>
+              </Button>
+              <Button variant="contained" size="small" onClick={splitPastedThoughts}>
                 Split into thoughts
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -155,7 +166,7 @@ export default function ThoughtComposer({ onAddThoughts }) {
           {drafts.map((draft, index) => {
             const inputId = `thought-input-${draft.id}`;
             const categoryId = `thought-category-${draft.id}`;
-            const errorId = `${inputId}-validation`;
+            const draftError = validationErrors[draft.id];
 
             return (
               <div className="draft-row" key={draft.id}>
@@ -163,46 +174,41 @@ export default function ThoughtComposer({ onAddThoughts }) {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div className="draft-text-field">
-                  <label className="sr-only" htmlFor={inputId}>
-                    Thought {index + 1}
-                  </label>
-                  <textarea
-                    ref={(element) => {
-                      inputRefs.current[draft.id] = element;
-                    }}
+                  <TextField
                     id={inputId}
-                    className="draft-textarea"
-                    rows="2"
+                    label={`Thought ${index + 1}`}
+                    multiline
+                    minRows={2}
                     value={draft.text}
                     onChange={(event) =>
                       updateDraft(draft.id, { text: event.target.value })
                     }
                     placeholder={index === 0 ? "Start anywhere. It doesn't have to be perfectly worded." : "Another thought..."}
-                    aria-describedby={validationErrors[draft.id] ? errorId : undefined}
+                    error={Boolean(draftError)}
+                    helperText={draftError ?? " "}
+                    inputRef={(element) => {
+                      inputRefs.current[draft.id] = element;
+                    }}
                   />
-                  {validationErrors[draft.id] && (
-                    <p id={errorId} className="validation-message" role="alert">
-                      {validationErrors[draft.id]}
-                    </p>
-                  )}
                 </div>
                 <div className="draft-category-field">
-                  <label htmlFor={categoryId}>Category</label>
                   <CategorySelect
                     id={categoryId}
                     value={draft.category}
                     onChange={(category) => updateDraft(draft.id, { category })}
+                    label="Category"
                   />
                 </div>
                 {drafts.length > 1 && (
-                  <button
-                    className="remove-draft-button"
-                    type="button"
+                  <IconButton
+                    color="error"
+                    size="small"
                     onClick={() => removeDraft(draft.id)}
                     aria-label={`Remove thought ${index + 1}`}
+                    sx={{ mt: "28px" }}
                   >
-                    <span aria-hidden="true">×</span>
-                  </button>
+                    <CloseRoundedIcon fontSize="small" />
+                  </IconButton>
                 )}
               </div>
             );
@@ -210,13 +216,23 @@ export default function ThoughtComposer({ onAddThoughts }) {
         </div>
 
         <div className="composer-footer">
-          <button className="add-draft-button" type="button" onClick={addDraft}>
-            <span aria-hidden="true">＋</span> Add another thought
-          </button>
-          <button className="primary-button submit-thoughts-button" type="submit">
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<AddRoundedIcon />}
+            onClick={addDraft}
+          >
+            Add another thought
+          </Button>
+          <Button
+            variant="contained"
+            size="medium"
+            type="submit"
+            endIcon={<ArrowForwardRoundedIcon />}
+            className="submit-thoughts-button"
+          >
             Add {drafts.length > 1 ? `${drafts.length} Thoughts` : "Thought"}
-            <span aria-hidden="true">→</span>
-          </button>
+          </Button>
         </div>
       </form>
     </section>
