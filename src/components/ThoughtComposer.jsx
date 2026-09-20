@@ -147,7 +147,7 @@ export default function ThoughtComposer({ onAddThoughts }) {
               }}
               error={Boolean(pasteError)}
               helperText={
-                pasteError ??
+                pasteError ||
                 "Bullets and numbered-list prefixes are removed automatically."
               }
             />
@@ -185,7 +185,7 @@ export default function ThoughtComposer({ onAddThoughts }) {
                     }
                     placeholder={index === 0 ? "Start anywhere. It doesn't have to be perfectly worded." : "Another thought..."}
                     error={Boolean(draftError)}
-                    helperText={draftError ?? " "}
+                    helperText={draftError || " "}
                     inputRef={(element) => {
                       inputRefs.current[draft.id] = element;
                     }}

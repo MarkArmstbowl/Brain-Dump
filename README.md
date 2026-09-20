@@ -6,7 +6,7 @@ A small React web app for capturing and organizing thoughts when your mind feels
 
 ## Current Sprint Goal
 
-Enable users to organize a larger brain dump faster by pasting and reordering multiple thoughts and using AI category suggestions they can accept or override.
+Enable users to move from a crowded brain dump to a focused next action, then complete, resolve, dismiss, or defer thoughts while keeping saved thoughts recoverable.
 
 ## Version 1 features
 
@@ -19,9 +19,9 @@ Enable users to organize a larger brain dump faster by pasting and reordering mu
 - **View thoughts by category:** The **All** view displays separate category groups.
 - **Move between categories:** Drag a card into another category in the **All** view, or change its category through **Edit**.
 
-## Current sprint increment (through V2 item 8)
+## Completed baseline (through V2 item 8)
 
-The sprint follows the force-ranked Version 2 backlog from top to bottom. It stops after **Override an AI suggestion**.
+The previous increment followed the force-ranked Version 2 backlog from top to bottom and stopped after **Override an AI suggestion**.
 
 1. **Paste multiple thoughts at once:** Paste one thought per line, split the text into editable rows, and review before adding.
 2. **Reorder thoughts:** Drag cards within a category to change their order. The saved order remains after refresh.
@@ -32,7 +32,7 @@ The sprint follows the force-ranked Version 2 backlog from top to bottom. It sto
 7. **Accept an AI suggestion:** Apply the suggested category explicitly.
 8. **Override an AI suggestion:** Choose and apply a different category instead.
 
-AI never changes a thought automatically. Priority and next-step features begin at item 9 and are outside this sprint.
+AI never changes a thought automatically. The current sprint continues in force-ranked order through **Return a saved thought to active**. Features after that cutoff remain outside the sprint.
 
 Changes are saved using browser `localStorage` and persist after refreshing. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
@@ -79,6 +79,8 @@ npm run build
 
 The application uses React and Vite. A small Vite server middleware sends only the thought for which the user clicks **Suggest category** to Groq, so the secret key never enters the browser bundle. No database is required: thoughts and their order remain in browser `localStorage`. Each teammate uses their own `.env` file and Groq key.
 
+Before the first AI request, the app shows the exact thought that will be sent, identifies Groq as the external provider, links to Groq's privacy policy, and allows the user to cancel. Consent is remembered only in that browser. The local AI route permits **12 requests per client per 60 seconds**; additional requests receive HTTP 429 with a retry time. Restarting the local Vite server resets this in-memory limit.
+
 ## Sprint Review demo / acceptance check
 
 Use a fresh browser profile or clear this site's local storage before starting. Clearing storage removes existing thoughts.
@@ -109,4 +111,4 @@ Also check that blank entries cannot be added or saved, Cancel preserves the ori
 - `.gitignore`: Excludes local configuration and generated files.
 - `TECHNICAL_DEBT.md`: AI-assisted code review, repair-cost estimate, and proposed force-ranked debt cards.
 
-Prioritization, next-step recommendations, accounts, history, reflection, reminders, wellness resources, and databases are not part of this sprint.
+The current sprint stops after **Return a saved thought to active**. Undoing completion, viewing completed items, reopening decisions, restoring dismissed thoughts, automatic whole-dump categorization, history, reflection, reminders, wellness resources, accounts, and databases remain outside this sprint.

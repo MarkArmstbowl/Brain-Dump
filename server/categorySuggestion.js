@@ -1,3 +1,5 @@
+import { createFixedWindowRateLimiter, getClientId } from "./rateLimiter.js";
+
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 const MAX_REQUEST_BYTES = 4_096;
@@ -56,7 +58,11 @@ async function readJsonBody(request) {
   }
 }
 
-export function createCategorySuggestionHandler({ apiKey, model = DEFAULT_MODEL }) {
+export function createCategorySuggestionHandler({
+  apiKey,
+  model = DEFAULT_MODEL,
+  rateLimiter = createFixedWindowRateLimiter()
+}) {
   return async function categorySuggestionHandler(request, response) {
     if (request.method !== "POST") {
       response.setHeader("Allow", "POST");
@@ -67,6 +73,18 @@ export function createCategorySuggestionHandler({ apiKey, model = DEFAULT_MODEL 
     if (!apiKey) {
       sendJson(response, 503, {
         error: "AI suggestions are not configured. Add GROQ_API_KEY to your .env file."
+      });
+      return;
+    }
+
+    const rateLimit = rateLimiter.consume(getClientId(request));
+    response.setHeader("RateLimit-Limit", String(rateLimit.limit));
+    response.setHeader("RateLimit-Remaining", String(rateLimit.remaining));
+
+    if (!rateLimit.allowed) {
+      response.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
+      sendJson(response, 429, {
+        error: `Too many AI requests. Try again in ${rateLimit.retryAfterSeconds} seconds.`
       });
       return;
     }

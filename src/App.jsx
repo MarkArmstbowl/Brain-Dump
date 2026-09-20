@@ -7,9 +7,11 @@ import Tabs from "@mui/material/Tabs";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { CATEGORY_LABELS } from "./constants";
 import { getCategorySuggestion } from "./api/categorySuggestion";
+import AiConsentDialog from "./components/AiConsentDialog";
 import ThoughtComposer from "./components/ThoughtComposer";
 import ThoughtFilters from "./components/ThoughtFilters";
 import ThoughtList from "./components/ThoughtList";
+import { loadAiConsent, saveAiConsent } from "./storage/aiConsentStorage";
 import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
 
 function TabNumberBadge({ children }) {
@@ -67,6 +69,9 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const [aiStates, setAiStates] = useState({});
+  const [hasAiConsent, setHasAiConsent] = useState(loadAiConsent);
+  const [pendingAiThoughtId, setPendingAiThoughtId] = useState(null);
+  const [consentStorageError, setConsentStorageError] = useState("");
   const aiRequestVersions = useRef({});
 
   const visibleThoughts = useMemo(
@@ -153,7 +158,16 @@ export default function App() {
     });
   }
 
-  async function handleRequestSuggestion(id) {
+  function handleRequestSuggestion(id) {
+    if (!hasAiConsent) {
+      setPendingAiThoughtId(id);
+      return;
+    }
+
+    requestCategorySuggestion(id);
+  }
+
+  async function requestCategorySuggestion(id) {
     const thought = thoughts.find((item) => item.id === id);
     if (!thought) return;
     const requestVersion = (aiRequestVersions.current[id] || 0) + 1;
@@ -180,6 +194,21 @@ export default function App() {
       }));
       setAnnouncement("AI suggestion failed.");
     }
+  }
+
+  function handleCancelAiConsent() {
+    setPendingAiThoughtId(null);
+    setAnnouncement("AI suggestion canceled. No thought was sent.");
+  }
+
+  function handleConfirmAiConsent() {
+    const thoughtId = pendingAiThoughtId;
+    if (!thoughtId) return;
+
+    setHasAiConsent(true);
+    setConsentStorageError(saveAiConsent());
+    setPendingAiThoughtId(null);
+    requestCategorySuggestion(thoughtId);
   }
 
   function applyAiChoice(id, category, action) {
@@ -228,6 +257,7 @@ export default function App() {
 
       <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
       {storageError && <p className="error-message" role="alert">{storageError}</p>}
+      {consentStorageError && <p className="error-message" role="alert">{consentStorageError}</p>}
 
       <nav className="view-navigation" aria-label="Brain Dump sections">
         <Tabs
@@ -283,7 +313,7 @@ export default function App() {
           <div className="capture-aftercare">
             <p className="privacy-note">
               <span aria-hidden="true">●</span>
-              Thoughts stay in this browser unless you request an AI suggestion.
+              AI suggestions require consent and send only the selected thought to Groq.
             </p>
             {thoughts.length > 0 && (
               <Button
@@ -337,6 +367,13 @@ export default function App() {
           />
         </section>
       </div>
+
+      <AiConsentDialog
+        open={Boolean(pendingAiThoughtId)}
+        thoughtText={thoughts.find((thought) => thought.id === pendingAiThoughtId)?.text || ""}
+        onCancel={handleCancelAiConsent}
+        onConfirm={handleConfirmAiConsent}
+      />
 
       <footer>A little room for what matters.</footer>
     </main>

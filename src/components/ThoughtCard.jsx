@@ -7,7 +7,7 @@ import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import { CATEGORIES, CATEGORY_LABELS } from "../constants";
+import { CATEGORY_LABELS } from "../constants";
 import CategorySelect from "./CategorySelect";
 
 export default function ThoughtCard({
@@ -68,7 +68,7 @@ export default function ThoughtCard({
               setValidationMessage("");
             }}
             error={Boolean(validationMessage)}
-            helperText={validationMessage ?? " "}
+            helperText={validationMessage || " "}
           />
 
           <div className="edit-category-field">
