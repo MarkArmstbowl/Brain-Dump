@@ -38,8 +38,13 @@ AI never changes a thought automatically. The current sprint continues in force-
 
 - **Mark a Do item as priority:** A Do card can be marked with a visible Priority badge.
 - **Change the priority:** Remove the priority mark or assign it to another Do card. Moving a priority card out of Do clears its priority because only actionable Do items can be prioritized.
+- **Get an AI priority suggestion:** Ask Groq to compare active Do items, review its suggestion, and choose whether to mark it.
+- **Select one item as Next:** Mark one Do card as the single current Next item.
+- **Change the selected Next item:** Select another Do card and the previous Next mark is cleared.
+- **Get an AI-recommended Next item:** Ask Groq to recommend one active Do item, then explicitly apply or dismiss it.
+- **Break a large item into a smaller first step:** Ask Groq for a smaller version of one Do item, review the proposed wording, then explicitly replace or dismiss it.
 
-Priority is intentionally a simple yes/no marker in this increment. Multiple priority levels, AI priority suggestions, priority-based reordering, and Next-item selection remain separate backlog items.
+Priority remains a simple yes/no marker in this increment. Multiple priority levels and priority-based reordering remain separate backlog items. AI suggestions never change a thought, priority, or Next selection until the user applies them.
 
 Changes are saved using browser `localStorage` and persist after refreshing. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
@@ -90,9 +95,11 @@ Run the automated V1 and V2 regression checks:
 npm test
 ```
 
-The application uses React and Vite. A small Vite server middleware sends only the thought for which the user clicks **Suggest category** to Groq, so the secret key never enters the browser bundle. No database is required: thoughts and their order remain in browser `localStorage`. Each teammate uses their own `.env` file and Groq key.
+The application uses React and Vite. Vite server middleware sends the consented category or focus request to Groq, so the secret key never enters the browser bundle. No database is required: thoughts, priority marks, and the selected Next item remain in browser `localStorage`. Each teammate uses their own `.env` file and Groq key.
 
-Before the first AI request, the app shows the exact thought that will be sent, identifies Groq as the external provider, links to Groq's privacy policy, and allows the user to cancel. Consent is remembered only in that browser. The local AI route permits **12 requests per client per 60 seconds**; additional requests receive HTTP 429 with a retry time. Restarting the local Vite server resets this in-memory limit.
+Before the first category request, the app shows the exact selected thought that will be sent, identifies Groq as the external provider, links to Groq's privacy policy, and allows the user to cancel. Focus tools use a separate consent because priority and Next recommendations send all active Do thought text for comparison; the dialog previews that exact list. A first-step request sends only its selected Do thought. Unsorted, Decide, and Let Go thoughts are not included in focus requests. Consent choices are remembered only in that browser.
+
+All local AI routes share a limit of **12 requests per client per 60 seconds**; additional requests receive HTTP 429 with a retry time. Restarting the local Vite server resets this in-memory limit.
 
 AI requests time out after 15 seconds. If a thought is edited, deleted, or assigned before its response arrives, the obsolete request is canceled so it cannot update the current card.
 
@@ -106,11 +113,15 @@ Use a fresh browser profile or clear this site's local storage before starting. 
 4. Open **Organize** using its tab or **Organize thoughts**. Verify **All** groups the thoughts and the total count is correct. Check every category filter.
 5. Drag two cards within one category and verify their order changes. Drag a card into another category and verify it moves.
 6. On a Do card, click **Mark priority** and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
-7. Click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
-8. Click **Accept suggestion** and verify the card moves to that category.
-9. Request another suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
-10. Edit, cancel an edit, and delete thoughts to confirm the Version 1 behavior still works.
-11. Refresh and verify that the remaining thoughts, categories, priority marks, and order persist.
+7. Click **Make Next** on one Do card, then on another. Verify only the second card keeps the Next badge and the focus panel names it.
+8. Click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
+9. Click **Recommend my Next item**, review the suggestion, and click **Make this Next**. Verify it replaces the prior Next selection.
+10. On a large Do card, click **Break into first step**. Verify the original remains unchanged until **Use this first step** is clicked.
+11. Click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
+12. Click **Accept suggestion** and verify the card moves to that category.
+13. Request another category suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
+14. Edit, cancel an edit, and delete thoughts to confirm the Version 1 behavior still works.
+15. Refresh and verify that the remaining thoughts, categories, priority and Next marks, and order persist.
 
 Also check that blank entries cannot be added or saved, Cancel preserves the original text, and deleting the final thought restores the empty state.
 
@@ -120,7 +131,9 @@ Also check that blank entries cannot be added or saved, Cancel preserves the ori
 - `src/App.jsx`: Application state and feature coordination.
 - `src/components/`: Forms, filters, list, and thought cards.
 - `src/api/categorySuggestion.js`: Browser call to the same-origin AI route.
+- `src/api/focusSuggestions.js`: Browser calls for priority, Next, and smaller-step suggestions.
 - `server/categorySuggestion.js`: Server-only Groq request, classification prompt, validation, and safe errors.
+- `server/focusSuggestion.js`: Server-only focus prompts, request validation, and structured AI response mapping.
 - `src/storage/thoughtStorage.js`: Compatible localStorage loading and saving.
 - `src/styles.css`: Responsive page and component styles.
 - `.env.example`: Safe template for the required local Groq configuration.

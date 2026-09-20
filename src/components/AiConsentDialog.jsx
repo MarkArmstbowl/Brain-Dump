@@ -10,7 +10,22 @@ import Link from "@mui/material/Link";
 
 const GROQ_PRIVACY_URL = "https://groq.com/privacy-policy";
 
-export default function AiConsentDialog({ open, thoughtText, onCancel, onConfirm }) {
+export default function AiConsentDialog({
+  open,
+  title = "Before using an AI suggestion",
+  description = "Brain Dump will send the text of this selected thought to Groq, an external AI provider, to suggest Do, Decide, or Let Go. No other thoughts are sent.",
+  thoughtTexts = [],
+  thoughtText = "",
+  confirmLabel = "I understand — send thought",
+  onCancel,
+  onConfirm
+}) {
+  const previewThoughts = thoughtTexts.length > 0
+    ? thoughtTexts
+    : thoughtText
+      ? [thoughtText]
+      : [];
+
   return (
     <Dialog
       open={open}
@@ -20,19 +35,19 @@ export default function AiConsentDialog({ open, thoughtText, onCancel, onConfirm
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle id="ai-consent-title">Before using an AI suggestion</DialogTitle>
+      <DialogTitle id="ai-consent-title">{title}</DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 2 }}>
         <DialogContentText id="ai-consent-description">
-          Brain Dump will send the text of this selected thought to Groq, an external AI
-          provider, to suggest Do, Decide, or Let Go. No other thoughts are sent.
+          {description}
         </DialogContentText>
 
-        {thoughtText && (
+        {previewThoughts.length > 0 && (
           <Box
-            component="blockquote"
+            component={previewThoughts.length === 1 ? "blockquote" : "ol"}
             sx={{
               m: 0,
               p: 2,
+              pl: previewThoughts.length === 1 ? 2 : 4,
               borderLeft: "3px solid",
               borderColor: "primary.light",
               borderRadius: 1,
@@ -42,7 +57,9 @@ export default function AiConsentDialog({ open, thoughtText, onCancel, onConfirm
               whiteSpace: "pre-wrap"
             }}
           >
-            {thoughtText}
+            {previewThoughts.length === 1
+              ? previewThoughts[0]
+              : previewThoughts.map((text, index) => <li key={`${index}-${text}`}>{text}</li>)}
           </Box>
         )}
 
@@ -62,7 +79,7 @@ export default function AiConsentDialog({ open, thoughtText, onCancel, onConfirm
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button variant="outlined" onClick={onCancel}>Not now</Button>
-        <Button variant="contained" onClick={onConfirm}>I understand — send thought</Button>
+        <Button variant="contained" onClick={onConfirm}>{confirmLabel}</Button>
       </DialogActions>
     </Dialog>
   );

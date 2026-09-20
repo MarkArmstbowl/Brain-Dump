@@ -3,13 +3,25 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { getCategorySuggestion } from "./api/categorySuggestion";
+import {
+  getFirstStepSuggestion,
+  getNextSuggestion,
+  getPrioritySuggestion
+} from "./api/focusSuggestions";
 
 vi.mock("./api/categorySuggestion", () => ({
   getCategorySuggestion: vi.fn()
 }));
 
+vi.mock("./api/focusSuggestions", () => ({
+  getFirstStepSuggestion: vi.fn(),
+  getNextSuggestion: vi.fn(),
+  getPrioritySuggestion: vi.fn()
+}));
+
 const THOUGHT_STORAGE_KEY = "brain-dump-thoughts";
 const CONSENT_STORAGE_KEY = "brain-dump-ai-consent";
+const PLANNING_CONSENT_STORAGE_KEY = "brain-dump-planning-ai-consent";
 
 function seedThoughts(thoughts) {
   localStorage.setItem(THOUGHT_STORAGE_KEY, JSON.stringify(thoughts));
@@ -28,10 +40,13 @@ function createDataTransfer() {
   };
 }
 
-describe("Brain Dump baseline features", () => {
+describe("Brain Dump features", () => {
   beforeEach(() => {
     localStorage.clear();
     getCategorySuggestion.mockReset();
+    getFirstStepSuggestion.mockReset();
+    getNextSuggestion.mockReset();
+    getPrioritySuggestion.mockReset();
   });
 
   afterEach(() => {
@@ -226,6 +241,23 @@ describe("Brain Dump baseline features", () => {
       .toBeVisible();
   });
 
+  it("shows a retryable provider error without changing the thought", async () => {
+    localStorage.setItem(CONSENT_STORAGE_KEY, "granted");
+    seedThoughts([{ id: "error", text: "Keep this thought", category: "unsorted" }]);
+    getCategorySuggestion.mockRejectedValue(new Error("The AI service is unavailable."));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await openOrganize(user);
+    await user.click(screen.getByRole("button", { name: "Suggest category" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The AI service is unavailable."
+    );
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0])
+      .toMatchObject({ text: "Keep this thought", category: "unsorted" });
+  });
+
   it("marks, persists, changes, and clears priority for Do thoughts", async () => {
     seedThoughts([{ id: "priority", text: "Prepare the demo", category: "do" }]);
     const user = userEvent.setup();
@@ -256,6 +288,121 @@ describe("Brain Dump baseline features", () => {
       const savedThought = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0];
       expect(savedThought).toMatchObject({ category: "decide", isPriority: false });
     });
-    expect(screen.queryByRole("button", { name: /priority/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^(Mark|Remove) priority$/i }))
+      .not.toBeInTheDocument();
+  });
+
+  it("selects one Next item, changes it, and persists the selection", async () => {
+    seedThoughts([
+      { id: "first", text: "Draft the outline", category: "do" },
+      { id: "second", text: "Email the team", category: "do" }
+    ]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    const firstCard = screen.getByText("Draft the outline").closest("li");
+    const secondCard = screen.getByText("Email the team").closest("li");
+    await user.click(within(firstCard).getByRole("button", { name: "Make Next" }));
+    expect(within(firstCard).getByText("Next")).toBeVisible();
+
+    await user.click(within(secondCard).getByRole("button", { name: "Make Next" }));
+    const savedAfterChange = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY));
+    expect(savedAfterChange.filter(({ isNext }) => isNext)).toEqual([
+      expect.objectContaining({ id: "second" })
+    ]);
+    expect(within(secondCard).getByRole("button", { name: "Current Next" })).toBeDisabled();
+    expect(within(firstCard).getByRole("button", { name: "Make Next" })).toBeEnabled();
+
+    firstRender.unmount();
+    render(<App />);
+    await openOrganize(user);
+    const reloadedSecondCard = screen
+      .getByText("Email the team", { selector: ".thought-text" })
+      .closest("li");
+    expect(within(reloadedSecondCard).getByRole("button", { name: "Current Next" }))
+      .toBeDisabled();
+
+    const decideGroup = screen.getByRole("heading", { name: "Decide" }).closest("section");
+    const dataTransfer = createDataTransfer();
+    fireEvent.dragStart(reloadedSecondCard, { dataTransfer });
+    fireEvent.drop(decideGroup, { dataTransfer });
+    await waitFor(() => {
+      const movedThought = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))
+        .find(({ id }) => id === "second");
+      expect(movedThought).toMatchObject({ category: "decide", isNext: false });
+    });
+    expect(screen.getByText("No Next item selected yet.")).toBeVisible();
+  });
+
+  it("applies AI priority, Next, and smaller-step suggestions only after confirmation", async () => {
+    localStorage.setItem(PLANNING_CONSENT_STORAGE_KEY, "granted");
+    seedThoughts([
+      { id: "first", text: "Prepare the entire presentation", category: "do" },
+      { id: "second", text: "Confirm the meeting room", category: "do" }
+    ]);
+    getPrioritySuggestion.mockResolvedValue({ thoughtId: "second" });
+    getNextSuggestion.mockResolvedValue({ thoughtId: "first" });
+    getFirstStepSuggestion.mockResolvedValue({ step: "Write the presentation title" });
+
+    const user = userEvent.setup();
+    render(<App />);
+    await openOrganize(user);
+
+    await user.click(screen.getByRole("button", { name: "Suggest a priority" }));
+    expect(await screen.findByLabelText("AI priority suggestion"))
+      .toHaveTextContent(/Confirm the meeting room.*priority/i);
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[1].isPriority)
+      .not.toBe(true);
+    await user.click(screen.getByRole("button", { name: "Mark as priority" }));
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[1].isPriority).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Recommend my Next item" }));
+    expect(await screen.findByLabelText("AI next suggestion"))
+      .toHaveTextContent(/Prepare the entire presentation.*Next item/i);
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].isNext)
+      .not.toBe(true);
+    await user.click(screen.getByRole("button", { name: "Make this Next" }));
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].isNext).toBe(true);
+
+    const presentationCard = screen
+      .getByText("Prepare the entire presentation", { selector: ".thought-text" })
+      .closest("li");
+    await user.click(
+      within(presentationCard).getByRole("button", { name: "Break into first step" })
+    );
+    expect(await within(presentationCard).findByText(/Write the presentation title/))
+      .toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].text)
+      .toBe("Prepare the entire presentation");
+    await user.click(
+      within(presentationCard).getByRole("button", { name: "Use this first step" })
+    );
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].text)
+      .toBe("Write the presentation title");
+  });
+
+  it("asks before sending all Do thoughts to AI focus tools", async () => {
+    seedThoughts([
+      { id: "first", text: "First private Do thought", category: "do" },
+      { id: "second", text: "Second private Do thought", category: "do" },
+      { id: "decide", text: "A Decide thought", category: "decide" }
+    ]);
+    getPrioritySuggestion.mockResolvedValue({ thoughtId: "first" });
+
+    const user = userEvent.setup();
+    render(<App />);
+    await openOrganize(user);
+    await user.click(screen.getByRole("button", { name: "Suggest a priority" }));
+
+    expect(screen.getByRole("heading", { name: "Before using AI focus tools" })).toBeVisible();
+    expect(screen.getByText("First private Do thought", { selector: "li" })).toBeVisible();
+    expect(screen.getByText("Second private Do thought", { selector: "li" })).toBeVisible();
+    expect(screen.queryByText("A Decide thought", { selector: "li" })).not.toBeInTheDocument();
+    expect(getPrioritySuggestion).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "I understand — send to Groq" }));
+    await waitFor(() => expect(getPrioritySuggestion).toHaveBeenCalledTimes(1));
+    expect(localStorage.getItem(PLANNING_CONSENT_STORAGE_KEY)).toBe("granted");
   });
 });

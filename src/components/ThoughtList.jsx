@@ -15,6 +15,11 @@ export default function ThoughtList({
   onDelete,
   onReorder,
   onTogglePriority,
+  onSelectNext,
+  planningAiState,
+  onRequestFirstStep,
+  onApplyFirstStep,
+  onDismissPlanningSuggestion,
   aiStates,
   onRequestSuggestion,
   onAcceptSuggestion,
@@ -89,6 +94,11 @@ export default function ThoughtList({
         onSave={onSave}
         onDelete={onDelete}
         onTogglePriority={() => onTogglePriority(thought.id)}
+        onSelectNext={() => onSelectNext(thought.id)}
+        planningAiState={planningAiState}
+        onRequestFirstStep={() => onRequestFirstStep(thought.id)}
+        onApplyFirstStep={(step) => onApplyFirstStep(thought.id, step)}
+        onDismissPlanningSuggestion={onDismissPlanningSuggestion}
         aiState={aiStates[thought.id]}
         onRequestSuggestion={() => onRequestSuggestion(thought.id)}
         onAcceptSuggestion={(suggestedCategory) => onAcceptSuggestion(thought.id, suggestedCategory)}

@@ -58,6 +58,24 @@ async function readJsonBody(request) {
   }
 }
 
+function createRequestController(request, response) {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  const abortIfUnfinished = () => {
+    if (!response.writableEnded) controller.abort();
+  };
+  request.once("aborted", abort);
+  response.once("close", abortIfUnfinished);
+
+  return {
+    signal: controller.signal,
+    cleanup() {
+      request.off("aborted", abort);
+      response.off("close", abortIfUnfinished);
+    }
+  };
+}
+
 export function createCategorySuggestionHandler({
   apiKey,
   model = DEFAULT_MODEL,
@@ -108,6 +126,7 @@ export function createCategorySuggestionHandler({
       return;
     }
 
+    const requestController = createRequestController(request, response);
     try {
       const groqResponse = await fetch(GROQ_API_URL, {
         method: "POST",
@@ -125,7 +144,8 @@ export function createCategorySuggestionHandler({
           reasoning_effort: "low",
           temperature: 0,
           max_completion_tokens: 200
-        })
+        }),
+        signal: requestController.signal
       });
 
       if (!groqResponse.ok) {
@@ -149,10 +169,13 @@ export function createCategorySuggestionHandler({
       }
 
       sendJson(response, 200, { category: suggestion.category });
-    } catch {
+    } catch (error) {
+      if (error.name === "AbortError") return;
       sendJson(response, 502, {
         error: "The AI returned an unexpected response. Please try again."
       });
+    } finally {
+      requestController.cleanup();
     }
   };
 }

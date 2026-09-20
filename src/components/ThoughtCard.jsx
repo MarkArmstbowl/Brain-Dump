@@ -28,6 +28,11 @@ export default function ThoughtCard({
   onSave,
   onDelete,
   onTogglePriority,
+  onSelectNext,
+  planningAiState,
+  onRequestFirstStep,
+  onApplyFirstStep,
+  onDismissPlanningSuggestion,
   aiState,
   onRequestSuggestion,
   onAcceptSuggestion,
@@ -118,6 +123,12 @@ export default function ThoughtCard({
               Priority
             </span>
           )}
+          {thought.isNext && (
+            <span className="next-badge">
+              <span aria-hidden="true">→</span>
+              Next
+            </span>
+          )}
         </div>
         {dragEnabled && (
           <DragIndicatorRoundedIcon
@@ -129,6 +140,62 @@ export default function ThoughtCard({
         )}
       </div>
       <p className="thought-text">{thought.text}</p>
+
+      {thought.category === "do" && (
+        <div className="card-focus-tools">
+          <div className="card-focus-actions">
+            <Button
+              variant={thought.isNext ? "contained" : "outlined"}
+              size="small"
+              disabled={thought.isNext}
+              onClick={onSelectNext}
+            >
+              {thought.isNext ? "Current Next" : "Make Next"}
+            </Button>
+            <Button
+              variant="text"
+              size="small"
+              startIcon={
+                planningAiState?.loading && planningAiState.thoughtId === thought.id
+                  ? <CircularProgress size={14} color="inherit" />
+                  : <AutoAwesomeRoundedIcon fontSize="small" />
+              }
+              disabled={planningAiState?.loading}
+              onClick={onRequestFirstStep}
+            >
+              {planningAiState?.loading && planningAiState.thoughtId === thought.id
+                ? "Breaking down…"
+                : "Break into first step"}
+            </Button>
+          </div>
+
+          {planningAiState?.kind === "first-step" &&
+            planningAiState.thoughtId === thought.id &&
+            planningAiState.error && (
+              <p className="ai-error" role="alert">{planningAiState.error}</p>
+          )}
+
+          {planningAiState?.kind === "first-step" &&
+            planningAiState.thoughtId === thought.id &&
+            planningAiState.step && (
+              <div className="first-step-suggestion" aria-label="AI first-step suggestion">
+                <p><strong>Smaller first step:</strong> {planningAiState.step}</p>
+                <div>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => onApplyFirstStep(planningAiState.step)}
+                  >
+                    Use this first step
+                  </Button>
+                  <Button variant="text" size="small" onClick={onDismissPlanningSuggestion}>
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+          )}
+        </div>
+      )}
 
       <div className="ai-category-tools">
         {!aiState?.suggestion && (
