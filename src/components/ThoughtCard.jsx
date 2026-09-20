@@ -101,32 +101,51 @@ export default function ThoughtCard({
 
       <p className="thought-text">{thought.text}</p>
 
-      {thought.category === "do" && (
-        <ThoughtFocusTools
-          thought={thought}
-          planningAiState={planningAiState}
-          onSelectNext={onSelectNext}
-          onRequestFirstStep={onRequestFirstStep}
-          onApplyFirstStep={onApplyFirstStep}
-          onDismissPlanningSuggestion={onDismissPlanningSuggestion}
-        />
-      )}
+      <details className="thought-action-drawer">
+        <summary>
+          <span>Actions</span>
+          <span className="thought-action-hint">
+            {thought.category === "do" ? "Focus, organize & manage" : "Organize & manage"}
+          </span>
+        </summary>
+        <div className="thought-action-content">
+          {thought.category === "do" && (
+            <div className="thought-action-section">
+              <p className="thought-action-section-label">Focus</p>
+              <ThoughtFocusTools
+                thought={thought}
+                planningAiState={planningAiState}
+                onSelectNext={onSelectNext}
+                onRequestFirstStep={onRequestFirstStep}
+                onApplyFirstStep={onApplyFirstStep}
+                onDismissPlanningSuggestion={onDismissPlanningSuggestion}
+              />
+            </div>
+          )}
 
-      <CategorySuggestion
-        thought={thought}
-        aiState={aiState}
-        onRequestSuggestion={onRequestSuggestion}
-        onAcceptSuggestion={onAcceptSuggestion}
-        onOverrideSuggestion={onOverrideSuggestion}
-      />
+          <div className="thought-action-section">
+            <p className="thought-action-section-label">Organize</p>
+            <CategorySuggestion
+              thought={thought}
+              aiState={aiState}
+              onRequestSuggestion={onRequestSuggestion}
+              onAcceptSuggestion={onAcceptSuggestion}
+              onOverrideSuggestion={onOverrideSuggestion}
+            />
+          </div>
 
-      <ThoughtCardActions
-        isDo={thought.category === "do"}
-        isPriority={thought.isPriority}
-        onTogglePriority={onTogglePriority}
-        onEdit={onEdit}
-        onDelete={() => onDelete(thought.id)}
-      />
+          <div className="thought-action-section">
+            <p className="thought-action-section-label">Manage</p>
+            <ThoughtCardActions
+              isDo={thought.category === "do"}
+              isPriority={thought.isPriority}
+              onTogglePriority={onTogglePriority}
+              onEdit={onEdit}
+              onDelete={() => onDelete(thought.id)}
+            />
+          </div>
+        </div>
+      </details>
     </li>
   );
 }

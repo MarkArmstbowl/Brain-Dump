@@ -31,6 +31,20 @@ async function openOrganize(user) {
   await user.click(screen.getByRole("tab", { name: /Organize/i }));
 }
 
+async function openCardActions(user, card) {
+  const drawer = card.querySelector(".thought-action-drawer");
+  if (!drawer.open) {
+    await user.click(within(card).getByText("Actions", { selector: "summary > span" }));
+  }
+}
+
+async function openFocusAi(user) {
+  const drawer = document.querySelector(".focus-ai-drawer");
+  if (!drawer.open) {
+    await user.click(screen.getByText("AI focus suggestions"));
+  }
+}
+
 function createDataTransfer() {
   const values = new Map();
   return {
@@ -65,7 +79,9 @@ describe("Brain Dump features", () => {
     expect(screen.getByText("Finish Agile assignment")).toBeVisible();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))).toHaveLength(1);
 
-    await user.click(screen.getByRole("button", { name: "Edit" }));
+    let thoughtCard = screen.getByText("Finish Agile assignment").closest("li");
+    await openCardActions(user, thoughtCard);
+    await user.click(within(thoughtCard).getByRole("button", { name: "Edit" }));
     const editInput = screen.getByLabelText("Edit thought");
     await user.clear(editInput);
     await user.type(editInput, "Finish Agile feature map");
@@ -75,7 +91,9 @@ describe("Brain Dump features", () => {
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].text)
       .toBe("Finish Agile feature map");
 
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    thoughtCard = screen.getByText("Finish Agile feature map").closest("li");
+    await openCardActions(user, thoughtCard);
+    await user.click(within(thoughtCard).getByRole("button", { name: "Delete" }));
     expect(screen.getByText("A little more room to think.")).toBeVisible();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))).toEqual([]);
   });
@@ -210,6 +228,7 @@ describe("Brain Dump features", () => {
     await openOrganize(user);
 
     const acceptCard = screen.getByText("Submit the form").closest("li");
+    await openCardActions(user, acceptCard);
     await user.click(within(acceptCard).getByRole("button", { name: "Suggest category" }));
     expect(await within(acceptCard).findByText(/AI suggests/)).toBeVisible();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].category)
@@ -218,6 +237,7 @@ describe("Brain Dump features", () => {
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].category).toBe("do");
 
     const overrideCard = screen.getByText("Think about the invitation").closest("li");
+    await openCardActions(user, overrideCard);
     await user.click(within(overrideCard).getByRole("button", { name: "Suggest category" }));
     expect(await within(overrideCard).findByText(/AI suggests/)).toBeVisible();
     await user.click(within(overrideCard).getByRole("button", { name: "Choose another" }));
@@ -244,10 +264,12 @@ describe("Brain Dump features", () => {
     const user = userEvent.setup();
     render(<App />);
     await openOrganize(user);
-    await user.click(screen.getByRole("button", { name: "Suggest category" }));
+    const card = screen.getByText("Temporary thought").closest("li");
+    await openCardActions(user, card);
+    await user.click(within(card).getByRole("button", { name: "Suggest category" }));
 
     expect(receivedSignal.aborted).toBe(false);
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(within(card).getByRole("button", { name: "Delete" }));
     expect(receivedSignal.aborted).toBe(true);
     expect(screen.getByText("A little more room to think.")).toBeVisible();
   });
@@ -266,7 +288,9 @@ describe("Brain Dump features", () => {
 
     render(<App />);
     fireEvent.click(screen.getByRole("tab", { name: /Organize/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Suggest category" }));
+    const card = screen.getByText("Slow request").closest("li");
+    fireEvent.click(within(card).getByText("Actions", { selector: "summary > span" }));
+    fireEvent.click(within(card).getByRole("button", { name: "Suggest category" }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(15_000);
@@ -285,7 +309,9 @@ describe("Brain Dump features", () => {
     const user = userEvent.setup();
     render(<App />);
     await openOrganize(user);
-    await user.click(screen.getByRole("button", { name: "Suggest category" }));
+    const card = screen.getByText("Keep this thought").closest("li");
+    await openCardActions(user, card);
+    await user.click(within(card).getByRole("button", { name: "Suggest category" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The AI service is unavailable."
@@ -300,21 +326,24 @@ describe("Brain Dump features", () => {
     const firstRender = render(<App />);
     await openOrganize(user);
 
-    await user.click(screen.getByRole("button", { name: "Mark priority" }));
+    let card = screen.getByText("Prepare the demo").closest("li");
+    await openCardActions(user, card);
+    await user.click(within(card).getByRole("button", { name: "Mark priority" }));
     expect(screen.getByText("Priority")).toBeVisible();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].isPriority).toBe(true);
 
     firstRender.unmount();
     render(<App />);
     await openOrganize(user);
-    expect(screen.getByRole("button", { name: "Remove priority" })).toBeVisible();
+    card = screen.getByText("Prepare the demo").closest("li");
+    await openCardActions(user, card);
+    expect(within(card).getByRole("button", { name: "Remove priority" })).toBeVisible();
 
-    await user.click(screen.getByRole("button", { name: "Remove priority" }));
+    await user.click(within(card).getByRole("button", { name: "Remove priority" }));
     expect(screen.queryByText("Priority")).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].isPriority).toBe(false);
 
-    await user.click(screen.getByRole("button", { name: "Mark priority" }));
-    const card = screen.getByText("Prepare the demo").closest("li");
+    await user.click(within(card).getByRole("button", { name: "Mark priority" }));
     const decideGroup = screen.getByRole("heading", { name: "Decide" }).closest("section");
     const dataTransfer = createDataTransfer();
     fireEvent.dragStart(card, { dataTransfer });
@@ -339,9 +368,11 @@ describe("Brain Dump features", () => {
 
     const firstCard = screen.getByText("Draft the outline").closest("li");
     const secondCard = screen.getByText("Email the team").closest("li");
+    await openCardActions(user, firstCard);
     await user.click(within(firstCard).getByRole("button", { name: "Make Next" }));
     expect(within(firstCard).getByText("Next")).toBeVisible();
 
+    await openCardActions(user, secondCard);
     await user.click(within(secondCard).getByRole("button", { name: "Make Next" }));
     const savedAfterChange = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY));
     expect(savedAfterChange.filter(({ isNext }) => isNext)).toEqual([
@@ -356,6 +387,7 @@ describe("Brain Dump features", () => {
     const reloadedSecondCard = screen
       .getByText("Email the team", { selector: ".thought-text" })
       .closest("li");
+    await openCardActions(user, reloadedSecondCard);
     expect(within(reloadedSecondCard).getByRole("button", { name: "Current Next" }))
       .toBeDisabled();
 
@@ -385,6 +417,7 @@ describe("Brain Dump features", () => {
     render(<App />);
     await openOrganize(user);
 
+    await openFocusAi(user);
     await user.click(screen.getByRole("button", { name: "Suggest a priority" }));
     expect(await screen.findByLabelText("AI priority suggestion"))
       .toHaveTextContent(/Confirm the meeting room.*priority/i);
@@ -404,6 +437,7 @@ describe("Brain Dump features", () => {
     const presentationCard = screen
       .getByText("Prepare the entire presentation", { selector: ".thought-text" })
       .closest("li");
+    await openCardActions(user, presentationCard);
     await user.click(
       within(presentationCard).getByRole("button", { name: "Break into first step" })
     );
@@ -429,6 +463,7 @@ describe("Brain Dump features", () => {
     const user = userEvent.setup();
     render(<App />);
     await openOrganize(user);
+    await openFocusAi(user);
     await user.click(screen.getByRole("button", { name: "Suggest a priority" }));
 
     expect(screen.getByRole("heading", { name: "Before using AI focus tools" })).toBeVisible();
@@ -440,5 +475,27 @@ describe("Brain Dump features", () => {
     await user.click(screen.getByRole("button", { name: "I understand — send to Groq" }));
     await waitFor(() => expect(getPrioritySuggestion).toHaveBeenCalledTimes(1));
     expect(localStorage.getItem(PLANNING_CONSENT_STORAGE_KEY)).toBe("granted");
+  });
+
+  it("keeps advanced controls collapsed and can focus the Do column", async () => {
+    seedThoughts([
+      { id: "do", text: "A Do thought", category: "do" },
+      { id: "decide", text: "A Decide thought", category: "decide" }
+    ]);
+    const user = userEvent.setup();
+    render(<App />);
+    await openOrganize(user);
+
+    const doCard = screen.getByText("A Do thought", { selector: ".thought-text" }).closest("li");
+    expect(doCard.querySelector(".thought-action-drawer")).not.toHaveAttribute("open");
+    expect(document.querySelector(".focus-ai-drawer")).not.toHaveAttribute("open");
+
+    const focusButton = screen.getByRole("button", { name: "Focus Do" });
+    await user.click(focusButton);
+    expect(focusButton).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector(".category-groups")).toHaveClass("is-do-focused");
+
+    await user.click(screen.getByRole("button", { name: "Balance columns" }));
+    expect(document.querySelector(".category-groups")).not.toHaveClass("is-do-focused");
   });
 });

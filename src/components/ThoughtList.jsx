@@ -1,4 +1,7 @@
 import { useState } from "react";
+import Button from "@mui/material/Button";
+import CloseFullscreenRoundedIcon from "@mui/icons-material/CloseFullscreenRounded";
+import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import { CATEGORIES } from "../constants";
 import ThoughtCard from "./ThoughtCard";
 
@@ -28,6 +31,7 @@ export default function ThoughtList({
   const [draggedThoughtId, setDraggedThoughtId] = useState(null);
   const [dropTargetCategory, setDropTargetCategory] = useState(null);
   const [dropTargetThoughtId, setDropTargetThoughtId] = useState(null);
+  const [isDoFocused, setIsDoFocused] = useState(false);
 
   if (thoughts.length === 0) {
     return (
@@ -128,12 +132,29 @@ export default function ThoughtList({
   if (grouped) {
     return (
       <>
-        <p className="drag-instruction">
-          <span aria-hidden="true">⠿</span>
-          <span className="desktop-drag-copy">Drag cards or use their arrow buttons to reorder. Drag into another column to move categories.</span>
-          <span className="mobile-drag-copy">Use arrow buttons to reorder. Use Edit to move categories.</span>
-        </p>
-        <div className="category-groups" aria-label="Thoughts grouped by category">
+        <div className="board-toolbar">
+          <p className="drag-instruction">
+            <span aria-hidden="true">⠿</span>
+            <span className="desktop-drag-copy">Drag cards or use their arrow buttons to reorder. Drag into another column to move categories.</span>
+            <span className="mobile-drag-copy">Use arrow buttons to reorder. Use Edit to move categories.</span>
+          </p>
+          <Button
+            className="do-focus-toggle"
+            variant="outlined"
+            size="small"
+            startIcon={isDoFocused
+              ? <CloseFullscreenRoundedIcon fontSize="small" />
+              : <OpenInFullRoundedIcon fontSize="small" />}
+            aria-pressed={isDoFocused}
+            onClick={() => setIsDoFocused((focused) => !focused)}
+          >
+            {isDoFocused ? "Balance columns" : "Focus Do"}
+          </Button>
+        </div>
+        <div
+          className={`category-groups${isDoFocused ? " is-do-focused" : ""}`}
+          aria-label="Thoughts grouped by category"
+        >
           {GROUPED_CATEGORIES.map((category) => {
             const categoryThoughts = thoughts.filter(
               (thought) => thought.category === category.value

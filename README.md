@@ -51,6 +51,7 @@ Priority remains a simple yes/no marker in this increment. Multiple priority lev
 - **Keyboard and touch reordering:** Every card in the grouped All view has focused up/down controls in addition to drag-and-drop. Order remains saved after refresh.
 - **Central thought reducer:** Add, edit, delete, move, category, priority, Next, and first-step transitions use one tested reducer.
 - **Smaller thought-card components:** Editing, category AI, focus tools, ordering, and standard actions are separate components with the same visible behavior.
+- **Clearer Organize workspace:** Card tools and AI focus suggestions use collapsed action drawers, while **Focus Do** widens the Do column and **Balance columns** restores the four-column view.
 
 Changes are saved using browser `localStorage` and persist after refreshing. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
@@ -118,15 +119,15 @@ Use a fresh browser profile or clear this site's local storage before starting. 
 3. Use **Add another thought** to confirm manual multi-entry still works.
 4. Open **Organize** using its tab or **Organize thoughts**. Verify **All** groups the thoughts and the total count is correct. Check every category filter.
 5. Drag two cards within one category and verify their order changes. Use a card's up/down buttons with a mouse, touch, and keyboard Enter or Space; verify focus stays on the control and the order persists. Drag a card into another category and verify it moves.
-6. On a Do card, click **Mark priority** and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
-7. Click **Make Next** on one Do card, then on another. Verify only the second card keeps the Next badge and the focus panel names it.
-8. Click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
+6. Click **Focus Do** and verify the Do column expands; click **Balance columns** to restore four equal columns. Open a Do card's **Actions**, click **Mark priority**, and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
+7. In each Do card's **Actions**, click **Make Next** on one card, then another. Verify only the second card keeps the Next badge and the focus panel names it.
+8. Expand **AI focus suggestions** and click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
 9. Click **Recommend my Next item**, review the suggestion, and click **Make this Next**. Verify it replaces the prior Next selection.
-10. On a large Do card, click **Break into first step**. Verify the original remains unchanged until **Use this first step** is clicked.
-11. Click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
+10. Open a large Do card's **Actions** and click **Break into first step**. Verify the original remains unchanged until **Use this first step** is clicked.
+11. Open a card's **Actions** and click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
 12. Click **Accept suggestion** and verify the card moves to that category.
 13. Request another category suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
-14. Edit, cancel an edit, and delete thoughts to confirm the Version 1 behavior still works.
+14. Use the **Edit** and **Delete** controls inside **Actions** to edit, cancel an edit, and delete thoughts, confirming the Version 1 behavior still works.
 15. Refresh and verify that the remaining thoughts, categories, priority and Next marks, and order persist.
 
 Also check that blank entries cannot be added or saved, Cancel preserves the original text, and deleting the final thought restores the empty state.
