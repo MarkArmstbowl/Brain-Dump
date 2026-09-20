@@ -77,9 +77,17 @@ To verify a production build:
 npm run build
 ```
 
+Run the automated V1 and V2 regression checks:
+
+```sh
+npm test
+```
+
 The application uses React and Vite. A small Vite server middleware sends only the thought for which the user clicks **Suggest category** to Groq, so the secret key never enters the browser bundle. No database is required: thoughts and their order remain in browser `localStorage`. Each teammate uses their own `.env` file and Groq key.
 
 Before the first AI request, the app shows the exact thought that will be sent, identifies Groq as the external provider, links to Groq's privacy policy, and allows the user to cancel. Consent is remembered only in that browser. The local AI route permits **12 requests per client per 60 seconds**; additional requests receive HTTP 429 with a retry time. Restarting the local Vite server resets this in-memory limit.
+
+AI requests time out after 15 seconds. If a thought is edited, deleted, or assigned before its response arrives, the obsolete request is canceled so it cannot update the current card.
 
 ## Sprint Review demo / acceptance check
 

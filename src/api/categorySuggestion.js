@@ -1,8 +1,9 @@
-export async function getCategorySuggestion(thought) {
+export async function getCategorySuggestion(thought, { signal } = {}) {
   const response = await fetch("/api/category-suggestion", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ thought })
+    body: JSON.stringify({ thought }),
+    signal
   });
 
   let result;

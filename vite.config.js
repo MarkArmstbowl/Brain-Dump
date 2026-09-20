@@ -23,6 +23,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
-    plugins: [react(), categorySuggestionApi(env)]
+    plugins: [react(), categorySuggestionApi(env)],
+    test: {
+      environment: "jsdom",
+      setupFiles: "./src/test/setup.js",
+      css: true
+    }
   };
 });

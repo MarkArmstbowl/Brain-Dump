@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,6 +13,8 @@ import ThoughtFilters from "./components/ThoughtFilters";
 import ThoughtList from "./components/ThoughtList";
 import { loadAiConsent, saveAiConsent } from "./storage/aiConsentStorage";
 import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
+
+const AI_REQUEST_TIMEOUT_MS = 15_000;
 
 function TabNumberBadge({ children }) {
   return (
@@ -73,6 +75,14 @@ export default function App() {
   const [pendingAiThoughtId, setPendingAiThoughtId] = useState(null);
   const [consentStorageError, setConsentStorageError] = useState("");
   const aiRequestVersions = useRef({});
+  const aiRequests = useRef({});
+
+  useEffect(() => () => {
+    Object.values(aiRequests.current).forEach(({ controller, timeoutId }) => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    });
+  }, []);
 
   const visibleThoughts = useMemo(
     () =>
@@ -149,6 +159,7 @@ export default function App() {
   }
 
   function clearAiState(id) {
+    cancelAiRequest(id);
     aiRequestVersions.current[id] = (aiRequestVersions.current[id] || 0) + 1;
     setAiStates((currentStates) => {
       if (!currentStates[id]) return currentStates;
@@ -156,6 +167,15 @@ export default function App() {
       delete nextStates[id];
       return nextStates;
     });
+  }
+
+  function cancelAiRequest(id) {
+    const activeRequest = aiRequests.current[id];
+    if (!activeRequest) return;
+
+    clearTimeout(activeRequest.timeoutId);
+    activeRequest.controller.abort();
+    delete aiRequests.current[id];
   }
 
   function handleRequestSuggestion(id) {
@@ -170,8 +190,15 @@ export default function App() {
   async function requestCategorySuggestion(id) {
     const thought = thoughts.find((item) => item.id === id);
     if (!thought) return;
+
+    cancelAiRequest(id);
     const requestVersion = (aiRequestVersions.current[id] || 0) + 1;
     aiRequestVersions.current[id] = requestVersion;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort(new DOMException("AI suggestion timed out.", "TimeoutError"));
+    }, AI_REQUEST_TIMEOUT_MS);
+    aiRequests.current[id] = { controller, timeoutId, requestVersion };
 
     setAiStates((currentStates) => ({
       ...currentStates,
@@ -179,7 +206,9 @@ export default function App() {
     }));
 
     try {
-      const suggestion = await getCategorySuggestion(thought.text);
+      const suggestion = await getCategorySuggestion(thought.text, {
+        signal: controller.signal
+      });
       if (aiRequestVersions.current[id] !== requestVersion) return;
       setAiStates((currentStates) => ({
         ...currentStates,
@@ -188,11 +217,23 @@ export default function App() {
       setAnnouncement(`AI suggested ${CATEGORY_LABELS[suggestion.category]}.`);
     } catch (error) {
       if (aiRequestVersions.current[id] !== requestVersion) return;
+      const message =
+        error.name === "TimeoutError"
+          ? "The AI suggestion timed out. Please try again."
+          : error.name === "AbortError"
+            ? "The AI suggestion was canceled."
+            : error.message;
       setAiStates((currentStates) => ({
         ...currentStates,
-        [id]: { loading: false, suggestion: null, error: error.message }
+        [id]: { loading: false, suggestion: null, error: message }
       }));
       setAnnouncement("AI suggestion failed.");
+    } finally {
+      const activeRequest = aiRequests.current[id];
+      if (activeRequest?.requestVersion === requestVersion) {
+        clearTimeout(activeRequest.timeoutId);
+        delete aiRequests.current[id];
+      }
     }
   }
 
