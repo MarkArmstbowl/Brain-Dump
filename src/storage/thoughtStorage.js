@@ -24,7 +24,8 @@ export function loadThoughts() {
           typeof thought.id === "string" &&
           typeof thought.text === "string" &&
           thought.text.trim() &&
-          (thought.category === undefined || CATEGORY_LABELS[thought.category])
+          (thought.category === undefined || CATEGORY_LABELS[thought.category]) &&
+          (thought.isPriority === undefined || typeof thought.isPriority === "boolean")
       ) &&
       new Set(parsedThoughts.map((thought) => thought.id)).size ===
         parsedThoughts.length;
@@ -36,7 +37,8 @@ export function loadThoughts() {
     return {
       thoughts: parsedThoughts.map((thought) => ({
         ...thought,
-        category: thought.category || "unsorted"
+        category: thought.category || "unsorted",
+        isPriority: Boolean(thought.isPriority) && thought.category === "do"
       })),
       error: ""
     };

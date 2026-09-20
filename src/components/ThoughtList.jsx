@@ -14,6 +14,7 @@ export default function ThoughtList({
   onSave,
   onDelete,
   onReorder,
+  onTogglePriority,
   aiStates,
   onRequestSuggestion,
   onAcceptSuggestion,
@@ -87,6 +88,7 @@ export default function ThoughtList({
         onCancel={onCancelEdit}
         onSave={onSave}
         onDelete={onDelete}
+        onTogglePriority={() => onTogglePriority(thought.id)}
         aiState={aiStates[thought.id]}
         onRequestSuggestion={() => onRequestSuggestion(thought.id)}
         onAcceptSuggestion={(suggestedCategory) => onAcceptSuggestion(thought.id, suggestedCategory)}

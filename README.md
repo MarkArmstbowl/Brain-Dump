@@ -34,6 +34,13 @@ The previous increment followed the force-ranked Version 2 backlog from top to b
 
 AI never changes a thought automatically. The current sprint continues in force-ranked order through **Return a saved thought to active**. Features after that cutoff remain outside the sprint.
 
+## Current sprint progress
+
+- **Mark a Do item as priority:** A Do card can be marked with a visible Priority badge.
+- **Change the priority:** Remove the priority mark or assign it to another Do card. Moving a priority card out of Do clears its priority because only actionable Do items can be prioritized.
+
+Priority is intentionally a simple yes/no marker in this increment. Multiple priority levels, AI priority suggestions, priority-based reordering, and Next-item selection remain separate backlog items.
+
 Changes are saved using browser `localStorage` and persist after refreshing. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
 ## Run locally
@@ -98,11 +105,12 @@ Use a fresh browser profile or clear this site's local storage before starting. 
 3. Use **Add another thought** to confirm manual multi-entry still works.
 4. Open **Organize** using its tab or **Organize thoughts**. Verify **All** groups the thoughts and the total count is correct. Check every category filter.
 5. Drag two cards within one category and verify their order changes. Drag a card into another category and verify it moves.
-6. Click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
-7. Click **Accept suggestion** and verify the card moves to that category.
-8. Request another suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
-9. Edit, cancel an edit, and delete thoughts to confirm the Version 1 behavior still works.
-10. Refresh and verify that the remaining thoughts, categories, and order persist.
+6. On a Do card, click **Mark priority** and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
+7. Click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
+8. Click **Accept suggestion** and verify the card moves to that category.
+9. Request another suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
+10. Edit, cancel an edit, and delete thoughts to confirm the Version 1 behavior still works.
+11. Refresh and verify that the remaining thoughts, categories, priority marks, and order persist.
 
 Also check that blank entries cannot be added or saved, Cancel preserves the original text, and deleting the final thought restores the empty state.
 

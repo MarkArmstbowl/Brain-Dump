@@ -99,7 +99,10 @@ export default function App() {
   }
 
   function handleAddThoughts(newThoughts) {
-    const nextThoughts = [...thoughts, ...newThoughts];
+    const nextThoughts = [
+      ...thoughts,
+      ...newThoughts.map((thought) => ({ ...thought, isPriority: false }))
+    ];
     setActiveFilter("all");
     commitThoughts(
       nextThoughts,
@@ -109,7 +112,14 @@ export default function App() {
 
   function handleSaveThought(id, text, category) {
     const nextThoughts = thoughts.map((thought) =>
-      thought.id === id ? { ...thought, text, category } : thought
+      thought.id === id
+        ? {
+            ...thought,
+            text,
+            category,
+            isPriority: category === "do" && Boolean(thought.isPriority)
+          }
+        : thought
     );
     setEditingId(null);
     clearAiState(id);
@@ -133,7 +143,11 @@ export default function App() {
     if (!thought || beforeId === id) return;
 
     const remainingThoughts = thoughts.filter((item) => item.id !== id);
-    const movedThought = { ...thought, category };
+    const movedThought = {
+      ...thought,
+      category,
+      isPriority: category === "do" && Boolean(thought.isPriority)
+    };
     let insertionIndex;
 
     if (beforeId) {
@@ -257,7 +271,13 @@ export default function App() {
     if (!thought) return;
 
     const nextThoughts = thoughts.map((item) =>
-      item.id === id ? { ...item, category } : item
+      item.id === id
+        ? {
+            ...item,
+            category,
+            isPriority: category === "do" && Boolean(item.isPriority)
+          }
+        : item
     );
     clearAiState(id);
     commitThoughts(
@@ -272,6 +292,20 @@ export default function App() {
     setActiveFilter(value);
     setEditingId(null);
     setAnnouncement(`Showing ${label} thoughts.`);
+  }
+
+  function handleTogglePriority(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "do") return;
+
+    const isPriority = !thought.isPriority;
+    const nextThoughts = thoughts.map((item) =>
+      item.id === id ? { ...item, isPriority } : item
+    );
+    commitThoughts(
+      nextThoughts,
+      isPriority ? "Thought marked as a priority." : "Priority removed from thought."
+    );
   }
 
   function switchView(view) {
@@ -401,6 +435,7 @@ export default function App() {
             onSave={handleSaveThought}
             onDelete={handleDeleteThought}
             onReorder={handleReorderThought}
+            onTogglePriority={handleTogglePriority}
             aiStates={aiStates}
             onRequestSuggestion={handleRequestSuggestion}
             onAcceptSuggestion={(id, category) => applyAiChoice(id, category, "accepted")}

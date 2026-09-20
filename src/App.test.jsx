@@ -225,4 +225,37 @@ describe("Brain Dump baseline features", () => {
     expect(screen.getByText("The AI suggestion timed out. Please try again."))
       .toBeVisible();
   });
+
+  it("marks, persists, changes, and clears priority for Do thoughts", async () => {
+    seedThoughts([{ id: "priority", text: "Prepare the demo", category: "do" }]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    await user.click(screen.getByRole("button", { name: "Mark priority" }));
+    expect(screen.getByText("Priority")).toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].isPriority).toBe(true);
+
+    firstRender.unmount();
+    render(<App />);
+    await openOrganize(user);
+    expect(screen.getByRole("button", { name: "Remove priority" })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Remove priority" }));
+    expect(screen.queryByText("Priority")).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].isPriority).toBe(false);
+
+    await user.click(screen.getByRole("button", { name: "Mark priority" }));
+    const card = screen.getByText("Prepare the demo").closest("li");
+    const decideGroup = screen.getByRole("heading", { name: "Decide" }).closest("section");
+    const dataTransfer = createDataTransfer();
+    fireEvent.dragStart(card, { dataTransfer });
+    fireEvent.drop(decideGroup, { dataTransfer });
+
+    await waitFor(() => {
+      const savedThought = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0];
+      expect(savedThought).toMatchObject({ category: "decide", isPriority: false });
+    });
+    expect(screen.queryByRole("button", { name: /priority/i })).not.toBeInTheDocument();
+  });
 });

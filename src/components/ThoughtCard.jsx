@@ -7,6 +7,8 @@ import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { CATEGORY_LABELS } from "../constants";
 import CategorySelect from "./CategorySelect";
 
@@ -25,6 +27,7 @@ export default function ThoughtCard({
   onCancel,
   onSave,
   onDelete,
+  onTogglePriority,
   aiState,
   onRequestSuggestion,
   onAcceptSuggestion,
@@ -104,10 +107,18 @@ export default function ThoughtCard({
       onDrop={onDrop}
     >
       <div className="thought-card-header">
-        <span className={`category-badge category-${thought.category}`}>
-          <span className="category-dot" aria-hidden="true" />
-          {CATEGORY_LABELS[thought.category]}
-        </span>
+        <div className="thought-labels">
+          <span className={`category-badge category-${thought.category}`}>
+            <span className="category-dot" aria-hidden="true" />
+            {CATEGORY_LABELS[thought.category]}
+          </span>
+          {thought.isPriority && (
+            <span className="priority-badge">
+              <StarRoundedIcon aria-hidden="true" fontSize="inherit" />
+              Priority
+            </span>
+          )}
+        </div>
         {dragEnabled && (
           <DragIndicatorRoundedIcon
             className="drag-handle"
@@ -207,6 +218,22 @@ export default function ThoughtCard({
       </div>
 
       <div className="thought-actions">
+        {thought.category === "do" && (
+          <Button
+            variant={thought.isPriority ? "contained" : "outlined"}
+            color="warning"
+            size="small"
+            startIcon={
+              thought.isPriority
+                ? <StarRoundedIcon fontSize="small" />
+                : <StarBorderRoundedIcon fontSize="small" />
+            }
+            onClick={onTogglePriority}
+            className="priority-action"
+          >
+            {thought.isPriority ? "Remove priority" : "Mark priority"}
+          </Button>
+        )}
         <Button
           variant="outlined"
           size="small"
