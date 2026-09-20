@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -24,6 +24,7 @@ import {
   savePlanningAiConsent
 } from "./storage/aiConsentStorage";
 import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
+import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
 const AI_REQUEST_TIMEOUT_MS = 15_000;
 
@@ -75,7 +76,7 @@ function TabCountBadge({ count }) {
 
 export default function App() {
   const [initialData] = useState(loadThoughts);
-  const [thoughts, setThoughts] = useState(initialData.thoughts);
+  const [thoughts, dispatchThoughts] = useReducer(thoughtReducer, initialData.thoughts);
   const [storageError, setStorageError] = useState(initialData.error);
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeView, setActiveView] = useState("capture");
@@ -126,87 +127,46 @@ export default function App() {
     [doThoughts]
   );
 
-  function commitThoughts(nextThoughts, message) {
+  function commitThoughts(action, message) {
+    const nextThoughts = thoughtReducer(thoughts, action);
+    if (nextThoughts === thoughts) return;
     clearPlanningAiState();
-    setThoughts(nextThoughts);
+    dispatchThoughts(action);
     setStorageError(saveThoughts(nextThoughts));
     setAnnouncement(message);
   }
 
   function handleAddThoughts(newThoughts) {
-    const nextThoughts = [
-      ...thoughts,
-      ...newThoughts.map((thought) => ({
-        ...thought,
-        isPriority: false,
-        isNext: false
-      }))
-    ];
     setActiveFilter("all");
     commitThoughts(
-      nextThoughts,
+      thoughtActions.addMany(newThoughts),
       `${newThoughts.length} ${newThoughts.length === 1 ? "thought" : "thoughts"} added.`
     );
   }
 
   function handleSaveThought(id, text, category) {
-    const nextThoughts = thoughts.map((thought) =>
-      thought.id === id
-        ? {
-            ...thought,
-            text,
-            category,
-            isPriority: category === "do" && Boolean(thought.isPriority),
-            isNext: category === "do" && Boolean(thought.isNext)
-          }
-        : thought
-    );
     setEditingId(null);
     clearAiState(id);
     commitThoughts(
-      nextThoughts,
+      thoughtActions.update(id, { text, category }),
       `Thought updated and assigned to ${CATEGORY_LABELS[category]}.`
     );
   }
 
   function handleDeleteThought(id) {
-    const nextThoughts = thoughts.filter((thought) => thought.id !== id);
     if (editingId === id) {
       setEditingId(null);
     }
     clearAiState(id);
-    commitThoughts(nextThoughts, "Thought deleted.");
+    commitThoughts(thoughtActions.remove(id), "Thought deleted.");
   }
 
   function handleReorderThought(id, category, beforeId = null) {
     const thought = thoughts.find((item) => item.id === id);
     if (!thought || beforeId === id) return;
 
-    const remainingThoughts = thoughts.filter((item) => item.id !== id);
-    const movedThought = {
-      ...thought,
-      category,
-      isPriority: category === "do" && Boolean(thought.isPriority),
-      isNext: category === "do" && Boolean(thought.isNext)
-    };
-    let insertionIndex;
-
-    if (beforeId) {
-      insertionIndex = remainingThoughts.findIndex((item) => item.id === beforeId);
-    } else {
-      const lastCategoryIndex = remainingThoughts.reduce(
-        (lastIndex, item, index) => item.category === category ? index : lastIndex,
-        -1
-      );
-      insertionIndex = lastCategoryIndex === -1 ? remainingThoughts.length : lastCategoryIndex + 1;
-    }
-
-    if (insertionIndex < 0) return;
-
-    const nextThoughts = [...remainingThoughts];
-    nextThoughts.splice(insertionIndex, 0, movedThought);
     commitThoughts(
-      nextThoughts,
+      thoughtActions.move(id, category, beforeId),
       thought.category === category
         ? `Thought reordered in ${CATEGORY_LABELS[category]}.`
         : `Thought moved to ${CATEGORY_LABELS[category]}.`
@@ -311,19 +271,9 @@ export default function App() {
     const thought = thoughts.find((item) => item.id === id);
     if (!thought) return;
 
-    const nextThoughts = thoughts.map((item) =>
-      item.id === id
-        ? {
-            ...item,
-            category,
-            isPriority: category === "do" && Boolean(item.isPriority),
-            isNext: category === "do" && Boolean(item.isNext)
-          }
-        : item
-    );
     clearAiState(id);
     commitThoughts(
-      nextThoughts,
+      thoughtActions.update(id, { category }),
       action === "accepted"
         ? `AI suggestion accepted. Thought assigned to ${CATEGORY_LABELS[category]}.`
         : `AI suggestion overridden. Thought assigned to ${CATEGORY_LABELS[category]}.`
@@ -341,11 +291,8 @@ export default function App() {
     if (!thought || thought.category !== "do") return;
 
     const isPriority = !thought.isPriority;
-    const nextThoughts = thoughts.map((item) =>
-      item.id === id ? { ...item, isPriority } : item
-    );
     commitThoughts(
-      nextThoughts,
+      thoughtActions.togglePriority(id),
       isPriority ? "Thought marked as a priority." : "Priority removed from thought."
     );
   }
@@ -354,11 +301,10 @@ export default function App() {
     const thought = thoughts.find((item) => item.id === id);
     if (!thought || thought.category !== "do") return;
 
-    const nextThoughts = thoughts.map((item) => ({
-      ...item,
-      isNext: item.category === "do" && item.id === id
-    }));
-    commitThoughts(nextThoughts, `Next item selected: ${thought.text}`);
+    commitThoughts(
+      thoughtActions.selectNext(id),
+      `Next item selected: ${thought.text}`
+    );
   }
 
   function cancelPlanningRequest() {
@@ -495,11 +441,11 @@ export default function App() {
   function handleApplyFirstStep(id, step) {
     const trimmedStep = step.trim();
     if (!trimmedStep) return;
-    const nextThoughts = thoughts.map((thought) =>
-      thought.id === id ? { ...thought, text: trimmedStep } : thought
-    );
     clearAiState(id);
-    commitThoughts(nextThoughts, "Thought replaced with a smaller first step.");
+    commitThoughts(
+      thoughtActions.update(id, { text: trimmedStep }),
+      "Thought replaced with a smaller first step."
+    );
   }
 
   function switchView(view) {

@@ -244,8 +244,11 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .thought-card-do::before { background: #75a47a; }
 .thought-card-decide::before { background: #d4aa52; }
 .thought-card-let-go::before { background: #ad81a8; }
-.thought-card-header { display: flex; align-items: center; justify-content: space-between; }
+.thought-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .thought-labels { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.thought-card-order-tools { display: flex; flex: 0 0 auto; align-items: center; gap: 3px; }
+.thought-order-controls { display: flex; align-items: center; padding: 2px; border: 1px solid #e1e6de; border-radius: 999px; background: #f7f9f5; }
+.thought-order-controls .MuiIconButton-root { width: 27px; height: 27px; color: #53685b; font: 800 15px/1 system-ui, sans-serif; }
 .thought-card[draggable="true"] { cursor: grab; }
 .thought-card[draggable="true"]:active { cursor: grabbing; }
 .thought-card.is-dragging { opacity: .45; }

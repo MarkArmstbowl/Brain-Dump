@@ -2,7 +2,7 @@
 
 Assessed after completing the sprint increment through Version 2 item 8. These were proposed **Product Backlog** cards for the Product Owner to force-rank.
 
-**Current status:** Cards 1–4 have since been implemented and may be moved to Done on the Scrum board. Cards 5–11 remain Product Backlog work. The original assessment below is preserved to show what the AI review found at the time.
+**Current status:** Cards 1–7 have since been implemented and may be moved to Done on the Scrum board. Cards 8–11 remain Product Backlog work. The original assessment below is preserved to show what the AI review found at the time.
 
 ## How the assessment was produced
 

@@ -46,6 +46,12 @@ AI never changes a thought automatically. The current sprint continues in force-
 
 Priority remains a simple yes/no marker in this increment. Multiple priority levels and priority-based reordering remain separate backlog items. AI suggestions never change a thought, priority, or Next selection until the user applies them.
 
+### Engineering work completed this sprint
+
+- **Keyboard and touch reordering:** Every card in the grouped All view has focused up/down controls in addition to drag-and-drop. Order remains saved after refresh.
+- **Central thought reducer:** Add, edit, delete, move, category, priority, Next, and first-step transitions use one tested reducer.
+- **Smaller thought-card components:** Editing, category AI, focus tools, ordering, and standard actions are separate components with the same visible behavior.
+
 Changes are saved using browser `localStorage` and persist after refreshing. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
 ## Run locally
@@ -111,7 +117,7 @@ Use a fresh browser profile or clear this site's local storage before starting. 
 2. In the **Capture** tab, click **Paste multiple thoughts**, paste at least three lines, and click **Split into thoughts**. Verify each line becomes an editable input row, then add them together.
 3. Use **Add another thought** to confirm manual multi-entry still works.
 4. Open **Organize** using its tab or **Organize thoughts**. Verify **All** groups the thoughts and the total count is correct. Check every category filter.
-5. Drag two cards within one category and verify their order changes. Drag a card into another category and verify it moves.
+5. Drag two cards within one category and verify their order changes. Use a card's up/down buttons with a mouse, touch, and keyboard Enter or Space; verify focus stays on the control and the order persists. Drag a card into another category and verify it moves.
 6. On a Do card, click **Mark priority** and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
 7. Click **Make Next** on one Do card, then on another. Verify only the second card keeps the Next badge and the focus panel names it.
 8. Click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
@@ -130,6 +136,7 @@ Also check that blank entries cannot be added or saved, Cancel preserves the ori
 - `index.html`: Vite entry page.
 - `src/App.jsx`: Application state and feature coordination.
 - `src/components/`: Forms, filters, list, and thought cards.
+- `src/state/thoughtReducer.js`: Tested state transitions for every active-thought mutation.
 - `src/api/categorySuggestion.js`: Browser call to the same-origin AI route.
 - `src/api/focusSuggestions.js`: Browser calls for priority, Next, and smaller-step suggestions.
 - `server/categorySuggestion.js`: Server-only Groq request, classification prompt, validation, and safe errors.

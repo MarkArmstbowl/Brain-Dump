@@ -139,6 +139,42 @@ describe("Brain Dump features", () => {
     });
   });
 
+  it("reorders with keyboard and touch-friendly buttons while keeping focus", async () => {
+    seedThoughts([
+      { id: "first", text: "First thought", category: "unsorted" },
+      { id: "second", text: "Second thought", category: "unsorted" },
+      { id: "third", text: "Third thought", category: "unsorted" }
+    ]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    const moveThirdUp = screen.getByRole("button", { name: "Move Third thought up" });
+    moveThirdUp.focus();
+    await user.keyboard("{Enter}");
+    expect(document.activeElement).toBe(moveThirdUp);
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY)).map(({ id }) => id))
+      .toEqual(["first", "third", "second"]);
+
+    await user.keyboard("{Enter}");
+    expect(document.activeElement).toBe(moveThirdUp);
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY)).map(({ id }) => id))
+      .toEqual(["third", "first", "second"]);
+    expect(screen.getByRole("button", { name: "Move Third thought up" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Move Third thought down" }));
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY)).map(({ id }) => id))
+      .toEqual(["first", "third", "second"]);
+
+    firstRender.unmount();
+    render(<App />);
+    await openOrganize(user);
+    const unsortedGroup = screen.getByRole("heading", { name: "Unsorted" }).closest("section");
+    expect(within(unsortedGroup).getAllByText(/thought$/, { selector: ".thought-text" })
+      .map((element) => element.textContent))
+      .toEqual(["First thought", "Third thought", "Second thought"]);
+  });
+
   it("moves a thought between category groups by dragging it", async () => {
     seedThoughts([
       { id: "move-me", text: "Send the email", category: "do" }

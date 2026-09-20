@@ -70,8 +70,13 @@ export default function ThoughtList({
     finishDragging();
   }
 
-  function renderThoughtCards(categoryThoughts, dragEnabled = false, category = null) {
-    return categoryThoughts.map((thought) => (
+  function renderThoughtCards(
+    categoryThoughts,
+    dragEnabled = false,
+    category = null,
+    showReorderControls = dragEnabled
+  ) {
+    return categoryThoughts.map((thought, index) => (
       <ThoughtCard
         key={`${thought.id}-${editingId === thought.id ? "edit" : "view"}`}
         thought={thought}
@@ -79,6 +84,19 @@ export default function ThoughtList({
         isDragging={draggedThoughtId === thought.id}
         isDropTarget={dropTargetThoughtId === thought.id}
         dragEnabled={dragEnabled && editingId !== thought.id}
+        showReorderControls={showReorderControls}
+        canMoveUp={index > 0}
+        canMoveDown={index < categoryThoughts.length - 1}
+        onMoveUp={() => onReorder(
+          thought.id,
+          category,
+          categoryThoughts[index - 1]?.id
+        )}
+        onMoveDown={() => onReorder(
+          thought.id,
+          category,
+          categoryThoughts[index + 2]?.id || null
+        )}
         onDragStart={(event) => startDragging(event, thought.id)}
         onDragEnd={finishDragging}
         onDragEnter={() => {
@@ -112,8 +130,8 @@ export default function ThoughtList({
       <>
         <p className="drag-instruction">
           <span aria-hidden="true">⠿</span>
-          <span className="desktop-drag-copy">Drag cards within a column to reorder them, or into another column to move them.</span>
-          <span className="mobile-drag-copy">Swipe to see each category. Use Edit to move a card.</span>
+          <span className="desktop-drag-copy">Drag cards or use their arrow buttons to reorder. Drag into another column to move categories.</span>
+          <span className="mobile-drag-copy">Use arrow buttons to reorder. Use Edit to move categories.</span>
         </p>
         <div className="category-groups" aria-label="Thoughts grouped by category">
           {GROUPED_CATEGORIES.map((category) => {
@@ -160,7 +178,7 @@ export default function ThoughtList({
 
   return (
     <ul className="thought-list filtered-thought-list" aria-label="Your thoughts">
-      {renderThoughtCards(thoughts)}
+      {renderThoughtCards(thoughts, false, thoughts[0]?.category, true)}
     </ul>
   );
 }
