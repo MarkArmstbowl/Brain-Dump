@@ -41,7 +41,7 @@ async function openCardActions(user, card) {
 async function openFocusAi(user) {
   const drawer = document.querySelector(".focus-ai-drawer");
   if (!drawer.open) {
-    await user.click(screen.getByText("AI focus suggestions"));
+    await user.click(screen.getByText("Need help choosing?"));
   }
 }
 
@@ -400,7 +400,68 @@ describe("Brain Dump features", () => {
         .find(({ id }) => id === "second");
       expect(movedThought).toMatchObject({ category: "decide", isNext: false });
     });
-    expect(screen.getByText("No Next item selected yet.")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Choose one thing to move forward" }))
+      .toBeVisible();
+  });
+
+  it("turns Next into a completable focus step with undo and restore", async () => {
+    seedThoughts([
+      { id: "next", text: "Send the project update", category: "do", isNext: true },
+      { id: "later", text: "Plan next week", category: "do" }
+    ]);
+    const user = userEvent.setup();
+    render(<App />);
+    await openOrganize(user);
+
+    expect(screen.getByRole("heading", { name: "Send the project update" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(screen.queryByText("Send the project update", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByText("Completed", { selector: "summary > span" })).toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "completed",
+      isNext: false
+    });
+
+    await user.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.getByText("Send the project update", { selector: ".thought-text" }))
+      .toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0].status).toBe("active");
+
+    const restoredCard = screen
+      .getByText("Send the project update", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, restoredCard);
+    await user.click(within(restoredCard).getByRole("button", { name: "Make Next" }));
+    await user.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.getByRole("heading", { name: "Choose one thing to move forward" }))
+      .toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "active",
+      isNext: false
+    });
+  });
+
+  it("opens an inline chooser and changes Next immediately", async () => {
+    seedThoughts([
+      { id: "first", text: "Draft the outline", category: "do", isNext: true },
+      { id: "second", text: "Email the team", category: "do" }
+    ]);
+    const user = userEvent.setup();
+    render(<App />);
+    await openOrganize(user);
+
+    await user.click(screen.getByRole("button", { name: "Change Next" }));
+    expect(screen.getByLabelText("Choose a new Next item")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Draft the outline, current Next" }))
+      .toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Make Email the team Next" }));
+    expect(screen.getByRole("heading", { name: "Email the team" })).toBeVisible();
+    expect(screen.queryByLabelText("Choose a new Next item")).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY)).filter(({ isNext }) => isNext))
+      .toEqual([expect.objectContaining({ id: "second" })]);
   });
 
   it("applies AI priority, Next, and smaller-step suggestions only after confirmation", async () => {

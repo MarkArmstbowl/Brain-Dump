@@ -25,6 +25,8 @@ export function loadThoughts() {
           typeof thought.text === "string" &&
           thought.text.trim() &&
           (thought.category === undefined || CATEGORY_LABELS[thought.category]) &&
+          (thought.status === undefined || ["active", "completed"].includes(thought.status)) &&
+          (thought.completedAt === undefined || typeof thought.completedAt === "string") &&
           (thought.isPriority === undefined || typeof thought.isPriority === "boolean") &&
           (thought.isNext === undefined || typeof thought.isNext === "boolean")
       ) &&
@@ -39,12 +41,21 @@ export function loadThoughts() {
     return {
       thoughts: parsedThoughts.map((thought) => {
         const category = thought.category || "unsorted";
-        const isNext = category === "do" && Boolean(thought.isNext) && !hasNext;
+        const status = thought.status || "active";
+        const isNext =
+          status !== "completed" &&
+          category === "do" &&
+          Boolean(thought.isNext) &&
+          !hasNext;
         if (isNext) hasNext = true;
         return {
           ...thought,
           category,
-          isPriority: category === "do" && Boolean(thought.isPriority),
+          status,
+          isPriority:
+            status !== "completed" &&
+            category === "do" &&
+            Boolean(thought.isPriority),
           isNext
         };
       }),

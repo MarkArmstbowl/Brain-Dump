@@ -17,6 +17,7 @@ describe("thoughtReducer", () => {
       id: "d",
       text: "New",
       category: "do",
+      status: "active",
       isPriority: false,
       isNext: false
     });
@@ -61,5 +62,22 @@ describe("thoughtReducer", () => {
     expect(next.filter(({ isNext }) => isNext)).toEqual([
       expect.objectContaining({ id: "b" })
     ]);
+  });
+
+  it("clears, completes, and restores a Next item", () => {
+    const cleared = thoughtReducer(startingThoughts, thoughtActions.clearNext("a"));
+    expect(cleared[0].isNext).toBe(false);
+
+    const completed = thoughtReducer(startingThoughts, thoughtActions.complete("a"));
+    expect(completed[0]).toMatchObject({
+      status: "completed",
+      isPriority: false,
+      isNext: false
+    });
+    expect(completed[0].completedAt).toEqual(expect.any(String));
+
+    const restored = thoughtReducer(completed, thoughtActions.restore("a"));
+    expect(restored[0]).toMatchObject({ status: "active", isPriority: false, isNext: false });
+    expect(restored[0].completedAt).toBeUndefined();
   });
 });
