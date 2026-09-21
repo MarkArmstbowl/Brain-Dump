@@ -24,7 +24,9 @@ export function loadThoughts() {
           typeof thought.id === "string" &&
           typeof thought.text === "string" &&
           thought.text.trim() &&
-          (thought.category === undefined || CATEGORY_LABELS[thought.category])
+          (thought.category === undefined || CATEGORY_LABELS[thought.category]) &&
+          (thought.isPriority === undefined || typeof thought.isPriority === "boolean") &&
+          (thought.isNext === undefined || typeof thought.isNext === "boolean")
       ) &&
       new Set(parsedThoughts.map((thought) => thought.id)).size ===
         parsedThoughts.length;
@@ -33,11 +35,19 @@ export function loadThoughts() {
       throw new Error("Invalid saved thoughts");
     }
 
+    let hasNext = false;
     return {
-      thoughts: parsedThoughts.map((thought) => ({
-        ...thought,
-        category: thought.category || "unsorted"
-      })),
+      thoughts: parsedThoughts.map((thought) => {
+        const category = thought.category || "unsorted";
+        const isNext = category === "do" && Boolean(thought.isNext) && !hasNext;
+        if (isNext) hasNext = true;
+        return {
+          ...thought,
+          category,
+          isPriority: category === "do" && Boolean(thought.isPriority),
+          isNext
+        };
+      }),
       error: ""
     };
   } catch {

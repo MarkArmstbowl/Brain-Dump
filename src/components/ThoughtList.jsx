@@ -1,4 +1,7 @@
 import { useState } from "react";
+import Button from "@mui/material/Button";
+import CloseFullscreenRoundedIcon from "@mui/icons-material/CloseFullscreenRounded";
+import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import { CATEGORIES } from "../constants";
 import ThoughtCard from "./ThoughtCard";
 
@@ -14,6 +17,12 @@ export default function ThoughtList({
   onSave,
   onDelete,
   onReorder,
+  onTogglePriority,
+  onSelectNext,
+  planningAiState,
+  onRequestFirstStep,
+  onApplyFirstStep,
+  onDismissPlanningSuggestion,
   aiStates,
   onRequestSuggestion,
   onAcceptSuggestion,
@@ -22,6 +31,7 @@ export default function ThoughtList({
   const [draggedThoughtId, setDraggedThoughtId] = useState(null);
   const [dropTargetCategory, setDropTargetCategory] = useState(null);
   const [dropTargetThoughtId, setDropTargetThoughtId] = useState(null);
+  const [isDoFocused, setIsDoFocused] = useState(false);
 
   if (thoughts.length === 0) {
     return (
@@ -64,8 +74,13 @@ export default function ThoughtList({
     finishDragging();
   }
 
-  function renderThoughtCards(categoryThoughts, dragEnabled = false, category = null) {
-    return categoryThoughts.map((thought) => (
+  function renderThoughtCards(
+    categoryThoughts,
+    dragEnabled = false,
+    category = null,
+    showReorderControls = dragEnabled
+  ) {
+    return categoryThoughts.map((thought, index) => (
       <ThoughtCard
         key={`${thought.id}-${editingId === thought.id ? "edit" : "view"}`}
         thought={thought}
@@ -73,6 +88,19 @@ export default function ThoughtList({
         isDragging={draggedThoughtId === thought.id}
         isDropTarget={dropTargetThoughtId === thought.id}
         dragEnabled={dragEnabled && editingId !== thought.id}
+        showReorderControls={showReorderControls}
+        canMoveUp={index > 0}
+        canMoveDown={index < categoryThoughts.length - 1}
+        onMoveUp={() => onReorder(
+          thought.id,
+          category,
+          categoryThoughts[index - 1]?.id
+        )}
+        onMoveDown={() => onReorder(
+          thought.id,
+          category,
+          categoryThoughts[index + 2]?.id || null
+        )}
         onDragStart={(event) => startDragging(event, thought.id)}
         onDragEnd={finishDragging}
         onDragEnter={() => {
@@ -87,6 +115,12 @@ export default function ThoughtList({
         onCancel={onCancelEdit}
         onSave={onSave}
         onDelete={onDelete}
+        onTogglePriority={() => onTogglePriority(thought.id)}
+        onSelectNext={() => onSelectNext(thought.id)}
+        planningAiState={planningAiState}
+        onRequestFirstStep={() => onRequestFirstStep(thought.id)}
+        onApplyFirstStep={(step) => onApplyFirstStep(thought.id, step)}
+        onDismissPlanningSuggestion={onDismissPlanningSuggestion}
         aiState={aiStates[thought.id]}
         onRequestSuggestion={() => onRequestSuggestion(thought.id)}
         onAcceptSuggestion={(suggestedCategory) => onAcceptSuggestion(thought.id, suggestedCategory)}
@@ -98,12 +132,29 @@ export default function ThoughtList({
   if (grouped) {
     return (
       <>
-        <p className="drag-instruction">
-          <span aria-hidden="true">⠿</span>
-          <span className="desktop-drag-copy">Drag cards within a column to reorder them, or into another column to move them.</span>
-          <span className="mobile-drag-copy">Swipe to see each category. Use Edit to move a card.</span>
-        </p>
-        <div className="category-groups" aria-label="Thoughts grouped by category">
+        <div className="board-toolbar">
+          <p className="drag-instruction">
+            <span aria-hidden="true">⠿</span>
+            <span className="desktop-drag-copy">Drag cards or use their arrow buttons to reorder. Drag into another column to move categories.</span>
+            <span className="mobile-drag-copy">Use arrow buttons to reorder. Use Edit to move categories.</span>
+          </p>
+          <Button
+            className="do-focus-toggle"
+            variant="outlined"
+            size="small"
+            startIcon={isDoFocused
+              ? <CloseFullscreenRoundedIcon fontSize="small" />
+              : <OpenInFullRoundedIcon fontSize="small" />}
+            aria-pressed={isDoFocused}
+            onClick={() => setIsDoFocused((focused) => !focused)}
+          >
+            {isDoFocused ? "Balance columns" : "Focus Do"}
+          </Button>
+        </div>
+        <div
+          className={`category-groups${isDoFocused ? " is-do-focused" : ""}`}
+          aria-label="Thoughts grouped by category"
+        >
           {GROUPED_CATEGORIES.map((category) => {
             const categoryThoughts = thoughts.filter(
               (thought) => thought.category === category.value
@@ -148,7 +199,7 @@ export default function ThoughtList({
 
   return (
     <ul className="thought-list filtered-thought-list" aria-label="Your thoughts">
-      {renderThoughtCards(thoughts)}
+      {renderThoughtCards(thoughts, false, thoughts[0]?.category, true)}
     </ul>
   );
 }

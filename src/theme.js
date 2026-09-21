@@ -184,7 +184,7 @@ const theme = createTheme({
               borderWidth: 1
             }
           },
-          "& .MuiOutlinedInput-input": {
+          "& .MuiOutlinedInput-input:not(.MuiInputBase-inputMultiline)": {
             padding: "12px 14px"
           }
         }
@@ -228,11 +228,8 @@ const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         multiline: {
-          padding: 0,
-          "& textarea": {
-            padding: "14px 16px",
-            minHeight: 76
-          }
+          padding: "12px 14px",
+          "& textarea": { padding: 0 }
         }
       }
     },

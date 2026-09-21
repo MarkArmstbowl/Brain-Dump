@@ -4,7 +4,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import { CATEGORIES } from "../constants";
 
-export default function CategorySelect({ id, value, onChange, label, size = "small", autoWidth = false }) {
+export default function CategorySelect({ id, value, onChange, label, size = "small" }) {
   const labelId = `${id}-label`;
   return (
     <FormControl fullWidth size={size} sx={{ minWidth: 120 }}>
