@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button from "@mui/material/Button";
 import CloseFullscreenRoundedIcon from "@mui/icons-material/CloseFullscreenRounded";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { CATEGORIES } from "../constants";
+import { CATEGORIES, CATEGORY_DESCRIPTIONS } from "../constants";
 import ThoughtCard from "./ThoughtCard";
 
 const GROUPED_CATEGORIES = [...CATEGORIES.slice(1), CATEGORIES[0]];
@@ -135,8 +135,8 @@ export default function ThoughtList({
         <div className="board-toolbar">
           <p className="drag-instruction">
             <span aria-hidden="true">⠿</span>
-            <span className="desktop-drag-copy">Drag cards or use their arrow buttons to reorder. Drag into another column to move categories.</span>
-            <span className="mobile-drag-copy">Use arrow buttons to reorder. Use Edit to move categories.</span>
+            <span className="desktop-drag-copy">Drag or use arrows to reorder. Drop into another group to move.</span>
+            <span className="mobile-drag-copy">Use arrows to reorder. Edit to move.</span>
           </p>
           <Button
             className="do-focus-toggle"
@@ -178,7 +178,13 @@ export default function ThoughtList({
               >
                 <header className="category-group-heading">
                   <span className={`category-group-dot category-group-dot-${category.value}`} aria-hidden="true" />
-                  <h3 id={headingId}>{category.label}</h3>
+                  <div>
+                    <h3 id={headingId}>{category.label}</h3>
+                    <p>{CATEGORY_DESCRIPTIONS[category.value]}</p>
+                  </div>
+                  <span className="category-group-count" aria-label={`${categoryThoughts.length} thoughts`}>
+                    {categoryThoughts.length}
+                  </span>
                 </header>
                 {categoryThoughts.length > 0 ? (
                   <ul className="thought-list group-thought-list">

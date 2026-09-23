@@ -2,6 +2,8 @@ import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -13,6 +15,7 @@ import {
   getPrioritySuggestion
 } from "./api/focusSuggestions";
 import AiConsentDialog from "./components/AiConsentDialog";
+import CompletedThoughts from "./components/CompletedThoughts";
 import FocusTools from "./components/FocusTools";
 import ThoughtComposer from "./components/ThoughtComposer";
 import ThoughtFilters from "./components/ThoughtFilters";
@@ -58,15 +61,15 @@ function TabCountBadge({ count }) {
           height: 22,
           padding: "0 6px",
           borderRadius: 999,
-          backgroundColor: "#e5ece1",
-          color: "#4c604f",
+          backgroundColor: "var(--bd-primary-container)",
+          color: "var(--bd-on-primary-container)",
           fontSize: 10,
           fontWeight: 700,
           position: "static",
           transform: "none",
           ".Mui-selected &": {
             backgroundColor: "rgba(255, 255, 255, 0.14)",
-            color: "#ffffff"
+            color: "var(--bd-on-primary)"
           }
         }
       }}
@@ -82,6 +85,7 @@ export default function App() {
   const [activeView, setActiveView] = useState("capture");
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
+  const [feedback, setFeedback] = useState({ message: "", undoThoughtId: null });
   const [aiStates, setAiStates] = useState({});
   const [hasAiConsent, setHasAiConsent] = useState(loadAiConsent);
   const [pendingAiThoughtId, setPendingAiThoughtId] = useState(null);
@@ -111,29 +115,38 @@ export default function App() {
     }
   }, []);
 
+  const activeThoughts = useMemo(
+    () => thoughts.filter((thought) => thought.status !== "completed"),
+    [thoughts]
+  );
+  const completedThoughts = useMemo(
+    () => thoughts.filter((thought) => thought.status === "completed"),
+    [thoughts]
+  );
   const visibleThoughts = useMemo(
     () =>
       activeFilter === "all"
-        ? thoughts
-        : thoughts.filter((thought) => thought.category === activeFilter),
-    [activeFilter, thoughts]
+        ? activeThoughts
+        : activeThoughts.filter((thought) => thought.category === activeFilter),
+    [activeFilter, activeThoughts]
   );
   const doThoughts = useMemo(
-    () => thoughts.filter((thought) => thought.category === "do"),
-    [thoughts]
+    () => activeThoughts.filter((thought) => thought.category === "do"),
+    [activeThoughts]
   );
   const currentNext = useMemo(
     () => doThoughts.find((thought) => thought.isNext) || null,
     [doThoughts]
   );
 
-  function commitThoughts(action, message) {
+  function commitThoughts(action, message, { undoThoughtId = null } = {}) {
     const nextThoughts = thoughtReducer(thoughts, action);
     if (nextThoughts === thoughts) return;
     clearPlanningAiState();
     dispatchThoughts(action);
     setStorageError(saveThoughts(nextThoughts));
     setAnnouncement(message);
+    setFeedback({ message, undoThoughtId });
   }
 
   function handleAddThoughts(newThoughts) {
@@ -288,7 +301,7 @@ export default function App() {
 
   function handleTogglePriority(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do") return;
+    if (!thought || thought.category !== "do" || thought.status === "completed") return;
 
     const isPriority = !thought.isPriority;
     commitThoughts(
@@ -299,12 +312,42 @@ export default function App() {
 
   function handleSelectNext(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do") return;
+    if (!thought || thought.category !== "do" || thought.status === "completed") return;
 
     commitThoughts(
       thoughtActions.selectNext(id),
       `Next item selected: ${thought.text}`
     );
+  }
+
+  function handleClearNext(id) {
+    commitThoughts(
+      thoughtActions.clearNext(id),
+      "Next cleared. The thought stays in Do."
+    );
+  }
+
+  function handleCompleteThought(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.status === "completed") return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.complete(id),
+      "Completed. Nice work.",
+      { undoThoughtId: id }
+    );
+  }
+
+  function handleRestoreThought(id) {
+    commitThoughts(
+      thoughtActions.restore(id),
+      "Thought restored to your active list."
+    );
+  }
+
+  function handleShowDoThoughts() {
+    const nextFilter = doThoughts.length > 0 ? "do" : "all";
+    handleFilterChange(nextFilter, nextFilter === "do" ? "Do" : "All");
   }
 
   function cancelPlanningRequest() {
@@ -501,7 +544,7 @@ export default function App() {
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
                 <TabNumberBadge>02</TabNumberBadge>
                 Organize
-                <TabCountBadge count={thoughts.length} />
+                <TabCountBadge count={activeThoughts.length} />
               </Box>
             }
           />
@@ -530,14 +573,14 @@ export default function App() {
               <span aria-hidden="true">●</span>
               AI tools require consent before thought text is sent to Groq.
             </p>
-            {thoughts.length > 0 && (
+            {activeThoughts.length > 0 && (
               <Button
                 variant="outlined"
                 size="small"
                 onClick={() => switchView("organize")}
                 endIcon={<ArrowForwardRoundedIcon fontSize="small" />}
               >
-                Organize {thoughts.length} {thoughts.length === 1 ? "thought" : "thoughts"}
+                Organize {activeThoughts.length} {activeThoughts.length === 1 ? "thought" : "thoughts"}
               </Button>
             )}
           </div>
@@ -560,7 +603,7 @@ export default function App() {
               <h2 id="dump-heading">Your Brain Dump</h2>
             </div>
             <span className="thought-count">
-              {thoughts.length} {thoughts.length === 1 ? "thought" : "thoughts"}
+              {activeThoughts.length} {activeThoughts.length === 1 ? "thought" : "thoughts"}
             </span>
           </div>
 
@@ -568,6 +611,11 @@ export default function App() {
             doThoughts={doThoughts}
             currentNext={currentNext}
             aiState={planningAiState}
+            onShowDo={handleShowDoThoughts}
+            onCompleteNext={handleCompleteThought}
+            onClearNext={handleClearNext}
+            onRequestFirstStep={(id) => handlePlanningRequest("first-step", id)}
+            onApplyFirstStep={handleApplyFirstStep}
             onSuggestPriority={() => handlePlanningRequest("priority")}
             onRecommendNext={() => handlePlanningRequest("next")}
             onApplyPriority={(id) => {
@@ -583,7 +631,7 @@ export default function App() {
           <ThoughtFilters activeFilter={activeFilter} onChange={handleFilterChange} />
           <ThoughtList
             thoughts={visibleThoughts}
-            hasAnyThoughts={thoughts.length > 0}
+            hasAnyThoughts={activeThoughts.length > 0}
             grouped={activeFilter === "all"}
             editingId={editingId}
             onEdit={setEditingId}
@@ -601,6 +649,11 @@ export default function App() {
             onRequestSuggestion={handleRequestSuggestion}
             onAcceptSuggestion={(id, category) => applyAiChoice(id, category, "accepted")}
             onOverrideSuggestion={(id, category) => applyAiChoice(id, category, "overridden")}
+          />
+
+          <CompletedThoughts
+            thoughts={completedThoughts}
+            onRestore={handleRestoreThought}
           />
         </section>
       </div>
@@ -625,6 +678,35 @@ export default function App() {
         onCancel={handleCancelPlanningConsent}
         onConfirm={handleConfirmPlanningConsent}
       />
+
+      <Snackbar
+        open={Boolean(feedback.message)}
+        autoHideDuration={3600}
+        onClose={(_event, reason) => {
+          if (reason !== "clickaway") {
+            setFeedback({ message: "", undoThoughtId: null });
+          }
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity="success"
+          variant="filled"
+          action={feedback.undoThoughtId ? (
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => handleRestoreThought(feedback.undoThoughtId)}
+            >
+              Undo
+            </Button>
+          ) : undefined}
+          onClose={() => setFeedback({ message: "", undoThoughtId: null })}
+          role="status"
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
 
       <footer>A little room for what matters.</footer>
     </main>

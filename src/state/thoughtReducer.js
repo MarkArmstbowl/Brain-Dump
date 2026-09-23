@@ -9,18 +9,27 @@ export const thoughtActions = {
     beforeId
   }),
   togglePriority: (id) => ({ type: "thought/togglePriority", id }),
-  selectNext: (id) => ({ type: "thought/selectNext", id })
+  selectNext: (id) => ({ type: "thought/selectNext", id }),
+  clearNext: (id) => ({ type: "thought/clearNext", id }),
+  complete: (id) => ({ type: "thought/complete", id }),
+  restore: (id) => ({ type: "thought/restore", id })
 };
 
 function keepDoOnlyState(thought) {
   if (thought.category === "do") {
     return {
       ...thought,
+      status: thought.status || "active",
       isPriority: Boolean(thought.isPriority),
       isNext: Boolean(thought.isNext)
     };
   }
-  return { ...thought, isPriority: false, isNext: false };
+  return {
+    ...thought,
+    status: thought.status || "active",
+    isPriority: false,
+    isNext: false
+  };
 }
 
 function addMany(state, newThoughts) {
@@ -29,6 +38,7 @@ function addMany(state, newThoughts) {
     ...state,
     ...newThoughts.map((thought) => keepDoOnlyState({
       ...thought,
+      status: "active",
       isPriority: false,
       isNext: false
     }))
@@ -84,16 +94,42 @@ export function thoughtReducer(state, action) {
       return moveThought(state, action.id, action.category, action.beforeId);
     case "thought/togglePriority": {
       const thought = state.find((item) => item.id === action.id);
-      if (!thought || thought.category !== "do") return state;
+      if (!thought || thought.category !== "do" || thought.status === "completed") return state;
       return updateThought(state, action.id, { isPriority: !thought.isPriority });
     }
     case "thought/selectNext": {
       const selected = state.find((thought) => thought.id === action.id);
-      if (!selected || selected.category !== "do") return state;
+      if (!selected || selected.category !== "do" || selected.status === "completed") return state;
       return state.map((thought) => ({
         ...thought,
-        isNext: thought.category === "do" && thought.id === action.id
+        isNext:
+          thought.status !== "completed" &&
+          thought.category === "do" &&
+          thought.id === action.id
       }));
+    }
+    case "thought/clearNext": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought?.isNext) return state;
+      return updateThought(state, action.id, { isNext: false });
+    }
+    case "thought/complete": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.status === "completed") return state;
+      return updateThought(state, action.id, {
+        status: "completed",
+        completedAt: new Date().toISOString(),
+        isPriority: false,
+        isNext: false
+      });
+    }
+    case "thought/restore": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.status !== "completed") return state;
+      return updateThought(state, action.id, {
+        status: "active",
+        completedAt: undefined
+      });
     }
     default:
       return state;
