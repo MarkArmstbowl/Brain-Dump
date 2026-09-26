@@ -59,7 +59,7 @@ Priority remains a simple yes/no marker in this increment. Multiple priority lev
 - **Smaller thought-card components:** Editing, category AI, focus tools, ordering, and standard actions are separate components with the same visible behavior.
 - **Clearer Organize workspace:** The Focus panel centers the current Next action, **Change Next** opens an inline chooser, and optional AI help stays inside **Need help choosing?**. Category descriptions, counts, and a vertically stacked narrow-screen layout reduce scanning effort.
 
-Changes are saved using browser `localStorage` and persist after refreshing, including categories, order, priority and Next marks, completion state, recorded decisions, and resolved or dismissed status. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
+Changes are saved using browser `localStorage` and persist after refreshing, including categories, order, priority and Next marks, completion state, recorded decisions, resolved or dismissed status, and the last open Capture or Organize workspace. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
 ## Run locally
 

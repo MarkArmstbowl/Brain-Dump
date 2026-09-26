@@ -22,6 +22,7 @@ vi.mock("./api/focusSuggestions", () => ({
 const THOUGHT_STORAGE_KEY = "brain-dump-thoughts";
 const CONSENT_STORAGE_KEY = "brain-dump-ai-consent";
 const PLANNING_CONSENT_STORAGE_KEY = "brain-dump-planning-ai-consent";
+const ACTIVE_VIEW_STORAGE_KEY = "brain-dump-active-view";
 
 function seedThoughts(thoughts) {
   localStorage.setItem(THOUGHT_STORAGE_KEY, JSON.stringify(thoughts));
@@ -66,6 +67,22 @@ describe("Brain Dump features", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+  });
+
+  it("returns to the selected workspace after a refresh", async () => {
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    expect(localStorage.getItem(ACTIVE_VIEW_STORAGE_KEY)).toBe("organize");
+    firstRender.unmount();
+    render(<App />);
+
+    expect(screen.getByRole("tab", { name: /Organize/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(document.querySelector("#organize-panel")).not.toHaveAttribute("hidden");
   });
 
   it("adds, views, edits, deletes, and persists a thought", async () => {

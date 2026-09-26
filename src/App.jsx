@@ -27,6 +27,7 @@ import {
   savePlanningAiConsent
 } from "./storage/aiConsentStorage";
 import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
+import { loadActiveView, saveActiveView } from "./storage/viewStorage";
 import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
 const AI_REQUEST_TIMEOUT_MS = 15_000;
@@ -82,7 +83,7 @@ export default function App() {
   const [thoughts, dispatchThoughts] = useReducer(thoughtReducer, initialData.thoughts);
   const [storageError, setStorageError] = useState(initialData.error);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [activeView, setActiveView] = useState("capture");
+  const [activeView, setActiveView] = useState(loadActiveView);
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const [feedback, setFeedback] = useState({ message: "", undoThoughtId: null });
@@ -523,6 +524,7 @@ export default function App() {
 
   function switchView(view) {
     setActiveView(view);
+    saveActiveView(view);
     setEditingId(null);
     setAnnouncement(view === "capture" ? "Capture view opened." : "Organize view opened.");
   }
