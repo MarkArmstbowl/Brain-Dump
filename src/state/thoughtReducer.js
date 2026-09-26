@@ -15,7 +15,9 @@ export const thoughtActions = {
   restore: (id) => ({ type: "thought/restore", id }),
   recordDecision: (id, decision) => ({ type: "thought/recordDecision", id, decision }),
   resolveDecision: (id) => ({ type: "thought/resolveDecision", id }),
-  dismiss: (id) => ({ type: "thought/dismiss", id })
+  dismiss: (id) => ({ type: "thought/dismiss", id }),
+  saveForLater: (id) => ({ type: "thought/saveForLater", id }),
+  returnSaved: (id) => ({ type: "thought/returnSaved", id })
 };
 
 function isActive(thought) {
@@ -183,6 +185,24 @@ export function thoughtReducer(state, action) {
       return updateThought(state, action.id, {
         status: "dismissed",
         dismissedAt: new Date().toISOString()
+      });
+    }
+    case "thought/saveForLater": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || !isActive(thought)) return state;
+      return updateThought(state, action.id, {
+        status: "saved",
+        savedAt: new Date().toISOString(),
+        isPriority: false,
+        isNext: false
+      });
+    }
+    case "thought/returnSaved": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.status !== "saved") return state;
+      return updateThought(state, action.id, {
+        status: "active",
+        savedAt: undefined
       });
     }
     default:

@@ -22,6 +22,7 @@ export default function ThoughtList({
   onRecordDecision,
   onResolveDecision,
   onDismissThought,
+  onSaveForLater,
   planningAiState,
   onRequestFirstStep,
   onApplyFirstStep,
@@ -123,6 +124,7 @@ export default function ThoughtList({
         onRecordDecision={(decision) => onRecordDecision(thought.id, decision)}
         onResolveDecision={() => onResolveDecision(thought.id)}
         onDismissThought={() => onDismissThought(thought.id)}
+        onSaveForLater={() => onSaveForLater(thought.id)}
         planningAiState={planningAiState}
         onRequestFirstStep={() => onRequestFirstStep(thought.id)}
         onApplyFirstStep={(step) => onApplyFirstStep(thought.id, step)}

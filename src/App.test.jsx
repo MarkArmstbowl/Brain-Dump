@@ -508,6 +508,53 @@ describe("Brain Dump features", () => {
     expect(saved.find(({ id }) => id === "release").status).toBe("dismissed");
   });
 
+  it("saves a thought for later, shows it after refresh, and returns it to active", async () => {
+    seedThoughts([
+      {
+        id: "later",
+        text: "Research presentation templates",
+        category: "do",
+        isPriority: true,
+        isNext: true
+      }
+    ]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    const activeCard = screen
+      .getByText("Research presentation templates", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, activeCard);
+    await user.click(within(activeCard).getByRole("button", { name: "Save for later" }));
+
+    expect(screen.queryByText("Research presentation templates", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByText("Saved for later", { selector: "summary > span" })).toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "saved",
+      isPriority: false,
+      isNext: false
+    });
+
+    firstRender.unmount();
+    render(<App />);
+    await user.click(screen.getByText("Saved for later", { selector: "summary > span" }));
+    expect(screen.getByText("Research presentation templates")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Return to active" }));
+
+    expect(screen.getByText("Research presentation templates", { selector: ".thought-text" }))
+      .toBeVisible();
+    expect(screen.queryByText("Saved for later", { selector: "summary > span" }))
+      .not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "active",
+      category: "do",
+      isPriority: false,
+      isNext: false
+    });
+  });
+
   it("opens an inline chooser and changes Next immediately", async () => {
     seedThoughts([
       { id: "first", text: "Draft the outline", category: "do", isNext: true },

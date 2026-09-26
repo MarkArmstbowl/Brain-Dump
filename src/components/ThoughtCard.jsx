@@ -33,6 +33,7 @@ export default function ThoughtCard({
   onRecordDecision,
   onResolveDecision,
   onDismissThought,
+  onSaveForLater,
   planningAiState,
   onRequestFirstStep,
   onApplyFirstStep,
@@ -163,6 +164,7 @@ export default function ThoughtCard({
 
           <div className="thought-management-section">
             <ThoughtCardActions
+              onSaveForLater={onSaveForLater}
               onEdit={onEdit}
               onDelete={() => onDelete(thought.id)}
             />

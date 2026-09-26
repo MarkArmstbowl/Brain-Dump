@@ -17,6 +17,7 @@ import {
 import AiConsentDialog from "./components/AiConsentDialog";
 import CompletedThoughts from "./components/CompletedThoughts";
 import FocusTools from "./components/FocusTools";
+import SavedThoughts from "./components/SavedThoughts";
 import ThoughtComposer from "./components/ThoughtComposer";
 import ThoughtFilters from "./components/ThoughtFilters";
 import ThoughtList from "./components/ThoughtList";
@@ -122,6 +123,10 @@ export default function App() {
   );
   const completedThoughts = useMemo(
     () => thoughts.filter((thought) => thought.status === "completed"),
+    [thoughts]
+  );
+  const savedThoughts = useMemo(
+    () => thoughts.filter((thought) => thought.status === "saved"),
     [thoughts]
   );
   const visibleThoughts = useMemo(
@@ -373,6 +378,25 @@ export default function App() {
     commitThoughts(
       thoughtActions.dismiss(id),
       "Thought dismissed and removed from your active brain dump."
+    );
+  }
+
+  function handleSaveForLater(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || (thought.status && thought.status !== "active")) return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.saveForLater(id),
+      "Thought saved for later and removed from your active brain dump."
+    );
+  }
+
+  function handleReturnSavedThought(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.status !== "saved") return;
+    commitThoughts(
+      thoughtActions.returnSaved(id),
+      `Thought returned to ${CATEGORY_LABELS[thought.category]}.`
     );
   }
 
@@ -676,6 +700,7 @@ export default function App() {
             onRecordDecision={handleRecordDecision}
             onResolveDecision={handleResolveDecision}
             onDismissThought={handleDismissThought}
+            onSaveForLater={handleSaveForLater}
             planningAiState={planningAiState}
             onRequestFirstStep={(id) => handlePlanningRequest("first-step", id)}
             onApplyFirstStep={handleApplyFirstStep}
@@ -684,6 +709,11 @@ export default function App() {
             onRequestSuggestion={handleRequestSuggestion}
             onAcceptSuggestion={(id, category) => applyAiChoice(id, category, "accepted")}
             onOverrideSuggestion={(id, category) => applyAiChoice(id, category, "overridden")}
+          />
+
+          <SavedThoughts
+            thoughts={savedThoughts}
+            onReturn={handleReturnSavedThought}
           />
 
           <CompletedThoughts

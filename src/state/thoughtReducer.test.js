@@ -116,4 +116,23 @@ describe("thoughtReducer", () => {
       dismissedAt: expect.any(String)
     });
   });
+
+  it("saves an active thought for later and returns it without restoring focus marks", () => {
+    const saved = thoughtReducer(startingThoughts, thoughtActions.saveForLater("a"));
+    expect(saved[0]).toMatchObject({
+      status: "saved",
+      isPriority: false,
+      isNext: false,
+      savedAt: expect.any(String)
+    });
+
+    const returned = thoughtReducer(saved, thoughtActions.returnSaved("a"));
+    expect(returned[0]).toMatchObject({
+      status: "active",
+      category: "do",
+      isPriority: false,
+      isNext: false
+    });
+    expect(returned[0].savedAt).toBeUndefined();
+  });
 });
