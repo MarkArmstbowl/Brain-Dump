@@ -325,8 +325,9 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .focus-ai-summary-title { display: inline-flex; align-items: center; gap: 7px; }
 .focus-ai-summary-title svg { color: #9b8049; }
 .focus-ai-summary-hint { margin-left: auto; color: #869087; font-size: 10px; font-weight: 500; }
-.focus-ai-content { display: grid; gap: 11px; padding-top: 12px; }
-.focus-tool-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.focus-ai-content { display: grid; gap: 11px; padding: 12px 0 16px; }
+.focus-tool-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.focus-tool-actions .MuiButton-root { min-height: 36px; }
 .focus-tools-empty { margin: 0; color: #7a837c; font-size: 11px; }
 .focus-suggestion { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 11px 12px; border: 1px solid #d8dfcc; border-radius: 12px; background: #fffdf5; color: #556052; }
 .focus-suggestion > svg { color: #aa8947; }
