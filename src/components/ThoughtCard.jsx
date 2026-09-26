@@ -104,18 +104,19 @@ export default function ThoughtCard({
       <details className="thought-action-drawer">
         <summary>
           <span>Actions</span>
-          <span className="thought-action-hint">
-            {thought.category === "do" ? "Focus, organize & manage" : "Organize & manage"}
-          </span>
         </summary>
         <div className="thought-action-content">
           {thought.category === "do" && (
             <div className="thought-action-section">
-              <p className="thought-action-section-label">Focus</p>
+              <div className="thought-action-section-heading">
+                <p className="thought-action-section-label">Plan</p>
+                <span>Priority or Next</span>
+              </div>
               <ThoughtFocusTools
                 thought={thought}
                 planningAiState={planningAiState}
                 onSelectNext={onSelectNext}
+                onTogglePriority={onTogglePriority}
                 onRequestFirstStep={onRequestFirstStep}
                 onApplyFirstStep={onApplyFirstStep}
                 onDismissPlanningSuggestion={onDismissPlanningSuggestion}
@@ -124,7 +125,10 @@ export default function ThoughtCard({
           )}
 
           <div className="thought-action-section">
-            <p className="thought-action-section-label">Organize</p>
+            <div className="thought-action-section-heading">
+              <p className="thought-action-section-label">Category</p>
+              <span>AI suggestion</span>
+            </div>
             <CategorySuggestion
               thought={thought}
               aiState={aiState}
@@ -134,12 +138,8 @@ export default function ThoughtCard({
             />
           </div>
 
-          <div className="thought-action-section">
-            <p className="thought-action-section-label">Manage</p>
+          <div className="thought-management-section">
             <ThoughtCardActions
-              isDo={thought.category === "do"}
-              isPriority={thought.isPriority}
-              onTogglePriority={onTogglePriority}
               onEdit={onEdit}
               onDelete={() => onDelete(thought.id)}
             />

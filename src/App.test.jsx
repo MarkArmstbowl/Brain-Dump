@@ -378,7 +378,7 @@ describe("Brain Dump features", () => {
     expect(savedAfterChange.filter(({ isNext }) => isNext)).toEqual([
       expect.objectContaining({ id: "second" })
     ]);
-    expect(within(secondCard).getByRole("button", { name: "Current Next" })).toBeDisabled();
+    expect(within(secondCard).getByText("Next")).toBeVisible();
     expect(within(firstCard).getByRole("button", { name: "Make Next" })).toBeEnabled();
 
     firstRender.unmount();
@@ -388,8 +388,7 @@ describe("Brain Dump features", () => {
       .getByText("Email the team", { selector: ".thought-text" })
       .closest("li");
     await openCardActions(user, reloadedSecondCard);
-    expect(within(reloadedSecondCard).getByRole("button", { name: "Current Next" }))
-      .toBeDisabled();
+    expect(within(reloadedSecondCard).getByText("Next")).toBeVisible();
 
     const decideGroup = screen.getByRole("heading", { name: "Decide" }).closest("section");
     const dataTransfer = createDataTransfer();

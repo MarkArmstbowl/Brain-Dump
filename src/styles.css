@@ -194,7 +194,7 @@ h1 { margin: 0; font: 400 clamp(38px, 4vw, 46px)/.98 Georgia, serif; letter-spac
 .organize-dots-doodle i:nth-child(2) { margin-left: 8px; background: #c5a75f; }
 .organize-dots-doodle i:nth-child(3) { background: #a883a7; }
 
-.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 17px; }
+.section-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 16px; margin-bottom: 17px; }
 .section-kicker { margin: 0 0 2px; }
 h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .thought-count { padding: 7px 12px; border: 1px solid var(--bd-outline-variant); border-radius: var(--bd-shape-medium); background: var(--bd-primary-container); color: var(--bd-on-primary-container); font-size: 12px; white-space: nowrap; }
@@ -251,9 +251,10 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .thought-card-let-go::before { background: #ad81a8; }
 .thought-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .thought-labels { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.thought-card-order-tools { display: flex; flex: 0 0 auto; align-items: center; gap: 3px; }
-.thought-order-controls { display: flex; align-items: center; padding: 2px; border: 1px solid var(--bd-outline-variant); border-radius: var(--bd-shape-medium); background: var(--bd-surface-low); }
-.thought-order-controls .MuiIconButton-root { width: 40px; height: 40px; color: var(--bd-on-surface-variant); font: 800 15px/1 system-ui, sans-serif; }
+.thought-card-order-tools { display: flex; flex: 0 0 auto; align-items: center; gap: 2px; }
+.thought-order-controls { display: flex; align-items: center; gap: 1px; padding: 2px; border: 1px solid var(--bd-outline-variant); border-radius: 10px; background: #f7f8f4; }
+.thought-order-controls .MuiIconButton-root { width: 30px; height: 30px; border-radius: 7px; color: var(--bd-on-surface-variant); font: 800 14px/1 system-ui, sans-serif; }
+.thought-order-controls .MuiIconButton-root:hover { background: #e9ede6; }
 .thought-card[draggable="true"] { cursor: grab; }
 .thought-card[draggable="true"]:active { cursor: grabbing; }
 .thought-card.is-dragging { opacity: .45; }
@@ -275,10 +276,11 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .next-step-copy h3 { margin: 3px 0 4px; color: #30483b; font: 700 20px/1.2 Georgia, serif; }
 .focus-empty-state p:last-child,
 .next-step-copy > p:last-child { margin: 0; color: #68736c; font-size: 12px; line-height: 1.45; }
-.next-step-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 13px 24px; align-items: center; padding-bottom: 15px; }
+.next-step-card { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(300px, 390px); gap: 13px 24px; align-items: start; padding-bottom: 15px; }
 .next-step-copy { min-width: 0; }
 .next-step-copy h3 { overflow-wrap: anywhere; font-size: 22px; }
-.next-step-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 470px; }
+.next-step-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: 390px; justify-self: end; }
+.next-step-actions .MuiButton-root { min-width: 0; white-space: normal; }
 .next-item-chooser { grid-column: 1 / -1; display: grid; gap: 10px; padding: 14px; border: 1px solid var(--bd-outline-variant); border-radius: var(--bd-shape-medium); background: var(--bd-surface-lowest); }
 .next-item-chooser-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .next-item-chooser-heading span { color: var(--bd-on-surface); font-size: 12px; font-weight: 800; }
@@ -340,22 +342,38 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .completed-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 12px; border-radius: var(--bd-shape-medium); background: var(--bd-surface-low); }
 .completed-item p { margin: 0; color: #637068; font-size: 12px; text-decoration: line-through; overflow-wrap: anywhere; }
 .completed-item span { color: #909991; font-size: 10px; }
-.thought-action-drawer { margin-top: auto; border-top: 1px solid #e4e8e1; color: #53635a; }
-.thought-action-drawer > summary { min-height: 44px; padding: 11px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .02em; }
-.thought-action-hint { margin-left: auto; color: #8a938c; font-size: 9px; font-weight: 500; letter-spacing: 0; }
+.thought-action-drawer { margin-top: auto; border-top: 1px solid var(--bd-outline-variant); color: #53635a; }
+.thought-action-drawer > summary { min-height: 42px; padding: 9px 2px 0; color: var(--bd-on-surface-variant); font-size: 11px; font-weight: 800; letter-spacing: .04em; }
 .category-groups.is-do-focused .category-group:not(.category-group-do) .thought-card-header { flex-wrap: wrap; }
 .category-groups.is-do-focused .category-group:not(.category-group-do) .thought-card-order-tools { margin-left: auto; }
-.category-groups.is-do-focused .category-group:not(.category-group-do) .thought-action-hint { display: none; }
-.thought-action-content { display: grid; gap: 11px; padding-top: 12px; }
-.thought-action-section { display: grid; gap: 7px; }
-.thought-action-section + .thought-action-section { padding-top: 10px; border-top: 1px solid #edf0eb; }
-.thought-action-section-label { margin: 0; color: #7b867f; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.card-focus-tools { display: grid; gap: 8px; margin: 0; padding: 10px; border: 1px solid #e1e6dd; border-radius: 12px; background: #f8faf7; }
-.card-focus-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.thought-action-content {
+  display: grid;
+  min-width: 0;
+  gap: 0;
+  margin: 0 -18px -18px;
+  padding: 0 18px 10px;
+  border-top: 1px solid var(--bd-outline-variant);
+  background: var(--bd-surface-low);
+}
+.thought-action-content .MuiButton-root { min-height: 32px; padding: 4px 8px; border-radius: 8px; font-size: 10.5px; }
+.thought-action-section { display: grid; gap: 7px; padding: 11px 0; }
+.thought-action-section + .thought-action-section { border-top: 1px solid var(--bd-outline-variant); }
+.thought-action-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.thought-action-section-heading > span { color: #909991; font-size: 9px; }
+.thought-action-section-label { margin: 0; color: #66746b; font-size: 9px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+.card-focus-tools { display: grid; gap: 4px; margin: 0; }
+.card-focus-actions { display: flex; align-items: stretch; gap: 6px; width: 100%; max-width: 340px; }
+.card-focus-actions .MuiButton-root { flex: 1 1 0; min-width: 0; white-space: normal; }
+.card-focus-actions .MuiButton-root:only-child { flex: 0 1 auto; }
+.card-ai-focus-action { display: flex; align-items: center; }
+.card-ai-focus-action .MuiButton-root { justify-content: flex-start; padding-inline: 3px; }
 .first-step-suggestion { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: #eef5ec; color: #3e5547; }
 .first-step-suggestion p { margin: 0; font-size: 11px; line-height: 1.45; }
 .first-step-suggestion > div { display: flex; flex-wrap: wrap; gap: 5px; }
-.ai-category-tools { display: grid; gap: 8px; }
+.ai-category-tools { display: grid; justify-items: start; gap: 7px; }
+.ai-category-tools .ai-suggestion,
+.ai-category-tools .override-controls { width: 100%; }
+.ai-category-tools > .MuiButton-root { justify-content: flex-start; padding-inline: 3px; }
 .ai-error { margin: 4px 0 0; color: #984f3d; font-size: 11px; line-height: 1.4; }
 .ai-suggestion { display: grid; gap: 10px; padding: 12px; border: 1px solid #dedbc9; border-radius: 12px; background: #fbfaf3; }
 .ai-suggestion-label { margin: 0; color: #5a604e; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
@@ -364,8 +382,10 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .override-controls { display: grid; gap: 8px; }
 .override-help { margin: 0; color: #8a6840; font-size: 10px; line-height: 1.4; }
 .override-actions { display: flex; justify-content: flex-end; gap: 6px; }
-.thought-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-.thought-actions .priority-action { margin-right: auto; }
+.thought-management-section { padding-top: 5px; border-top: 1px solid var(--bd-outline-variant); }
+.thought-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; }
+.thought-actions .MuiButton-root { color: var(--bd-on-surface-variant); }
+.thought-actions .MuiButton-colorError { color: var(--bd-error); }
 .thought-card-editing .thought-actions { margin-top: 16px; }
 .edit-category-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 15px; }
 
@@ -380,6 +400,11 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
 
 @media (max-width: 1280px) {
   .organize-doodle { display: none; }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .category-groups,
+  .category-groups.is-do-focused { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
@@ -400,8 +425,8 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
     grid-template-columns: 1fr;
   }
   .do-focus-toggle.MuiButton-root { display: none; }
-  .next-step-card { grid-template-columns: 1fr; }
-  .next-step-actions { justify-content: flex-start; max-width: none; }
+  .next-step-card { grid-template-columns: minmax(0, 1fr); }
+  .next-step-actions { max-width: 430px; justify-self: start; }
   .desktop-drag-copy { display: none; }
   .mobile-drag-copy { display: inline; }
 }
@@ -438,7 +463,6 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
   .board-toolbar { align-items: flex-start; flex-direction: column; gap: 9px; }
   .focus-empty-state { align-items: stretch; flex-direction: column; gap: 12px; }
   .focus-empty-state .MuiButton-root { align-self: flex-start; }
-  .next-step-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .next-step-actions .MuiButton-root { width: 100%; margin: 0; }
   .next-item-chooser-heading { align-items: stretch; flex-direction: column; gap: 6px; }
   .next-item-chooser-heading .MuiButton-root { align-self: flex-start; }
@@ -450,6 +474,16 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
   .edit-category-field { align-items: stretch; flex-direction: column; }
   .capture-aftercare { align-items: stretch; flex-direction: column; gap: 8px; }
   .privacy-note { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 390px) {
+  .app-shell { width: calc(100% - 20px); }
+  .dump-section { padding-inline: 12px; }
+  .thought-card { padding: 15px; }
+  .thought-action-content { margin-inline: -15px; margin-bottom: -15px; padding-inline: 15px; }
+  .next-step-actions { grid-template-columns: minmax(0, 1fr); }
+  .focus-ai-summary-hint,
+  .thought-action-section-heading > span { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

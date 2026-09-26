@@ -24,7 +24,7 @@ export default function CategorySuggestion({
     <div className="ai-category-tools">
       {!aiState?.suggestion && (
         <Button
-          variant="outlined"
+          variant="text"
           size="small"
           startIcon={
             aiState?.loading

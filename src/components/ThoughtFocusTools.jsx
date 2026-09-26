@@ -1,11 +1,14 @@
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
 
 export default function ThoughtFocusTools({
   thought,
   planningAiState,
   onSelectNext,
+  onTogglePriority,
   onRequestFirstStep,
   onApplyFirstStep,
   onDismissPlanningSuggestion
@@ -16,14 +19,27 @@ export default function ThoughtFocusTools({
   return (
     <div className="card-focus-tools">
       <div className="card-focus-actions">
+        {!thought.isNext && (
+          <Button variant="outlined" size="small" onClick={onSelectNext}>
+            Make Next
+          </Button>
+        )}
         <Button
-          variant={thought.isNext ? "contained" : "outlined"}
+          variant={thought.isPriority ? "contained" : "outlined"}
+          color="warning"
           size="small"
-          disabled={thought.isNext}
-          onClick={onSelectNext}
+          aria-label={thought.isPriority ? "Remove priority" : "Mark priority"}
+          aria-pressed={thought.isPriority}
+          startIcon={thought.isPriority
+            ? <StarRoundedIcon fontSize="small" />
+            : <StarBorderRoundedIcon fontSize="small" />}
+          onClick={onTogglePriority}
         >
-          {thought.isNext ? "Current Next" : "Make Next"}
+          {thought.isPriority ? "Priority on" : "Mark priority"}
         </Button>
+      </div>
+
+      <div className="card-ai-focus-action">
         <Button
           variant="text"
           size="small"
