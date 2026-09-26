@@ -12,31 +12,49 @@ export const thoughtActions = {
   selectNext: (id) => ({ type: "thought/selectNext", id }),
   clearNext: (id) => ({ type: "thought/clearNext", id }),
   complete: (id) => ({ type: "thought/complete", id }),
-  restore: (id) => ({ type: "thought/restore", id })
+  restore: (id) => ({ type: "thought/restore", id }),
+  recordDecision: (id, decision) => ({ type: "thought/recordDecision", id, decision }),
+  resolveDecision: (id) => ({ type: "thought/resolveDecision", id }),
+  dismiss: (id) => ({ type: "thought/dismiss", id })
 };
 
-function keepDoOnlyState(thought) {
-  if (thought.category === "do") {
-    return {
-      ...thought,
-      status: thought.status || "active",
-      isPriority: Boolean(thought.isPriority),
-      isNext: Boolean(thought.isNext)
-    };
-  }
-  return {
+function isActive(thought) {
+  return !thought.status || thought.status === "active";
+}
+
+function normalizeThoughtState(thought) {
+  const status = thought.status || "active";
+  const normalized = {
     ...thought,
-    status: thought.status || "active",
-    isPriority: false,
-    isNext: false
+    status,
+    isPriority:
+      status === "active" &&
+      thought.category === "do" &&
+      Boolean(thought.isPriority),
+    isNext:
+      status === "active" &&
+      thought.category === "do" &&
+      Boolean(thought.isNext)
   };
+
+  if (thought.category !== "decide") {
+    normalized.decision = undefined;
+    normalized.decidedAt = undefined;
+    normalized.resolvedAt = undefined;
+  }
+
+  if (thought.category !== "let-go") {
+    normalized.dismissedAt = undefined;
+  }
+
+  return normalized;
 }
 
 function addMany(state, newThoughts) {
   if (!Array.isArray(newThoughts) || newThoughts.length === 0) return state;
   return [
     ...state,
-    ...newThoughts.map((thought) => keepDoOnlyState({
+    ...newThoughts.map((thought) => normalizeThoughtState({
       ...thought,
       status: "active",
       isPriority: false,
@@ -49,7 +67,7 @@ function updateThought(state, id, changes) {
   if (!state.some((thought) => thought.id === id)) return state;
   return state.map((thought) =>
     thought.id === id
-      ? keepDoOnlyState({ ...thought, ...changes })
+      ? normalizeThoughtState({ ...thought, ...changes })
       : thought
   );
 }
@@ -59,7 +77,9 @@ function moveThought(state, id, category, beforeId) {
   if (!thought || beforeId === id) return state;
 
   const remaining = state.filter((item) => item.id !== id);
-  const movedThought = keepDoOnlyState({ ...thought, category });
+  if (!isActive(thought)) return state;
+
+  const movedThought = normalizeThoughtState({ ...thought, category });
   let insertionIndex;
 
   if (beforeId) {
@@ -94,16 +114,16 @@ export function thoughtReducer(state, action) {
       return moveThought(state, action.id, action.category, action.beforeId);
     case "thought/togglePriority": {
       const thought = state.find((item) => item.id === action.id);
-      if (!thought || thought.category !== "do" || thought.status === "completed") return state;
+      if (!thought || thought.category !== "do" || !isActive(thought)) return state;
       return updateThought(state, action.id, { isPriority: !thought.isPriority });
     }
     case "thought/selectNext": {
       const selected = state.find((thought) => thought.id === action.id);
-      if (!selected || selected.category !== "do" || selected.status === "completed") return state;
+      if (!selected || selected.category !== "do" || !isActive(selected)) return state;
       return state.map((thought) => ({
         ...thought,
         isNext:
-          thought.status !== "completed" &&
+          isActive(thought) &&
           thought.category === "do" &&
           thought.id === action.id
       }));
@@ -115,7 +135,7 @@ export function thoughtReducer(state, action) {
     }
     case "thought/complete": {
       const thought = state.find((item) => item.id === action.id);
-      if (!thought || thought.status === "completed") return state;
+      if (!thought || thought.category !== "do" || !isActive(thought)) return state;
       return updateThought(state, action.id, {
         status: "completed",
         completedAt: new Date().toISOString(),
@@ -129,6 +149,40 @@ export function thoughtReducer(state, action) {
       return updateThought(state, action.id, {
         status: "active",
         completedAt: undefined
+      });
+    }
+    case "thought/recordDecision": {
+      const thought = state.find((item) => item.id === action.id);
+      const decision = typeof action.decision === "string" ? action.decision.trim() : "";
+      if (!thought || thought.category !== "decide" || !isActive(thought) || !decision) {
+        return state;
+      }
+      return updateThought(state, action.id, {
+        decision,
+        decidedAt: new Date().toISOString()
+      });
+    }
+    case "thought/resolveDecision": {
+      const thought = state.find((item) => item.id === action.id);
+      if (
+        !thought ||
+        thought.category !== "decide" ||
+        !isActive(thought) ||
+        !thought.decision?.trim()
+      ) {
+        return state;
+      }
+      return updateThought(state, action.id, {
+        status: "resolved",
+        resolvedAt: new Date().toISOString()
+      });
+    }
+    case "thought/dismiss": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.category !== "let-go" || !isActive(thought)) return state;
+      return updateThought(state, action.id, {
+        status: "dismissed",
+        dismissedAt: new Date().toISOString()
       });
     }
     default:

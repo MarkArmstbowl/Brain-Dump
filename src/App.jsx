@@ -116,7 +116,7 @@ export default function App() {
   }, []);
 
   const activeThoughts = useMemo(
-    () => thoughts.filter((thought) => thought.status !== "completed"),
+    () => thoughts.filter((thought) => !thought.status || thought.status === "active"),
     [thoughts]
   );
   const completedThoughts = useMemo(
@@ -301,7 +301,7 @@ export default function App() {
 
   function handleTogglePriority(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do" || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || (thought.status && thought.status !== "active")) return;
 
     const isPriority = !thought.isPriority;
     commitThoughts(
@@ -312,7 +312,7 @@ export default function App() {
 
   function handleSelectNext(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do" || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || (thought.status && thought.status !== "active")) return;
 
     commitThoughts(
       thoughtActions.selectNext(id),
@@ -329,7 +329,7 @@ export default function App() {
 
   function handleCompleteThought(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || (thought.status && thought.status !== "active")) return;
     clearAiState(id);
     commitThoughts(
       thoughtActions.complete(id),
@@ -342,6 +342,36 @@ export default function App() {
     commitThoughts(
       thoughtActions.restore(id),
       "Thought restored to your active list."
+    );
+  }
+
+  function handleRecordDecision(id, decision) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "decide" || thought.status === "resolved") return;
+
+    commitThoughts(
+      thoughtActions.recordDecision(id, decision),
+      "Decision recorded. Mark it resolved when it is settled."
+    );
+  }
+
+  function handleResolveDecision(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "decide" || !thought.decision) return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.resolveDecision(id),
+      "Decision resolved and removed from your active brain dump."
+    );
+  }
+
+  function handleDismissThought(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "let-go") return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.dismiss(id),
+      "Thought dismissed and removed from your active brain dump."
     );
   }
 
@@ -641,6 +671,9 @@ export default function App() {
             onReorder={handleReorderThought}
             onTogglePriority={handleTogglePriority}
             onSelectNext={handleSelectNext}
+            onRecordDecision={handleRecordDecision}
+            onResolveDecision={handleResolveDecision}
+            onDismissThought={handleDismissThought}
             planningAiState={planningAiState}
             onRequestFirstStep={(id) => handlePlanningRequest("first-step", id)}
             onApplyFirstStep={handleApplyFirstStep}

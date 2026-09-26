@@ -442,6 +442,55 @@ describe("Brain Dump features", () => {
     });
   });
 
+  it("records and resolves a decision, then dismisses a Let Go thought", async () => {
+    seedThoughts([
+      { id: "decision", text: "Choose the meeting time", category: "decide" },
+      { id: "release", text: "Stop revisiting the old draft", category: "let-go" }
+    ]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    let decisionCard = screen
+      .getByText("Choose the meeting time", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, decisionCard);
+    await user.type(
+      within(decisionCard).getByLabelText("What did you decide?"),
+      "Meet on Tuesday morning"
+    );
+    await user.click(within(decisionCard).getByRole("button", { name: "Record decision" }));
+    expect(within(decisionCard).getByText("Meet on Tuesday morning")).toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "active",
+      decision: "Meet on Tuesday morning"
+    });
+
+    firstRender.unmount();
+    render(<App />);
+    await openOrganize(user);
+    decisionCard = screen
+      .getByText("Choose the meeting time", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, decisionCard);
+    expect(within(decisionCard).getByText("Meet on Tuesday morning")).toBeVisible();
+    await user.click(within(decisionCard).getByRole("button", { name: "Mark resolved" }));
+    expect(screen.queryByText("Choose the meeting time", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+
+    const letGoCard = screen
+      .getByText("Stop revisiting the old draft", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, letGoCard);
+    await user.click(within(letGoCard).getByRole("button", { name: "Dismiss thought" }));
+    expect(screen.queryByText("Stop revisiting the old draft", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+
+    const saved = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY));
+    expect(saved.find(({ id }) => id === "decision").status).toBe("resolved");
+    expect(saved.find(({ id }) => id === "release").status).toBe("dismissed");
+  });
+
   it("opens an inline chooser and changes Next immediately", async () => {
     seedThoughts([
       { id: "first", text: "Draft the outline", category: "do", isNext: true },

@@ -19,6 +19,9 @@ export default function ThoughtList({
   onReorder,
   onTogglePriority,
   onSelectNext,
+  onRecordDecision,
+  onResolveDecision,
+  onDismissThought,
   planningAiState,
   onRequestFirstStep,
   onApplyFirstStep,
@@ -117,6 +120,9 @@ export default function ThoughtList({
         onDelete={onDelete}
         onTogglePriority={() => onTogglePriority(thought.id)}
         onSelectNext={() => onSelectNext(thought.id)}
+        onRecordDecision={(decision) => onRecordDecision(thought.id, decision)}
+        onResolveDecision={() => onResolveDecision(thought.id)}
+        onDismissThought={() => onDismissThought(thought.id)}
         planningAiState={planningAiState}
         onRequestFirstStep={() => onRequestFirstStep(thought.id)}
         onApplyFirstStep={(step) => onApplyFirstStep(thought.id, step)}

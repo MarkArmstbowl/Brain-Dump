@@ -370,6 +370,14 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .first-step-suggestion { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: #eef5ec; color: #3e5547; }
 .first-step-suggestion p { margin: 0; font-size: 11px; line-height: 1.45; }
 .first-step-suggestion > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.decision-form,
+.decision-tools,
+.let-go-tools { display: grid; justify-items: start; gap: 8px; min-width: 0; }
+.decision-form .MuiTextField-root { width: 100%; }
+.decision-note { width: 100%; min-width: 0; padding: 8px 10px; border-left: 3px solid #d4aa52; background: #fffaf0; }
+.decision-note span { color: #7a6840; font-size: 8px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.decision-note p { margin: 3px 0 0; color: var(--bd-on-surface); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.let-go-tools > p { margin: 0; color: var(--bd-on-surface-variant); font-size: 10px; line-height: 1.4; }
 .ai-category-tools { display: grid; justify-items: start; gap: 7px; }
 .ai-category-tools .ai-suggestion,
 .ai-category-tools .override-controls { width: 100%; }

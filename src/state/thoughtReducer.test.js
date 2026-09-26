@@ -80,4 +80,40 @@ describe("thoughtReducer", () => {
     expect(restored[0]).toMatchObject({ status: "active", isPriority: false, isNext: false });
     expect(restored[0].completedAt).toBeUndefined();
   });
+
+  it("records and resolves a Decide thought in order", () => {
+    const ignored = thoughtReducer(startingThoughts, thoughtActions.resolveDecision("c"));
+    expect(ignored).toBe(startingThoughts);
+
+    const recorded = thoughtReducer(
+      startingThoughts,
+      thoughtActions.recordDecision("c", "  Choose the morning session.  ")
+    );
+    expect(recorded[2]).toMatchObject({
+      decision: "Choose the morning session.",
+      decidedAt: expect.any(String)
+    });
+
+    const resolved = thoughtReducer(recorded, thoughtActions.resolveDecision("c"));
+    expect(resolved[2]).toMatchObject({
+      status: "resolved",
+      decision: "Choose the morning session.",
+      resolvedAt: expect.any(String)
+    });
+  });
+
+  it("dismisses only active Let Go thoughts", () => {
+    const thoughts = [
+      ...startingThoughts,
+      { id: "d", text: "Release this worry", category: "let-go", status: "active" }
+    ];
+    const ignored = thoughtReducer(thoughts, thoughtActions.dismiss("c"));
+    expect(ignored).toBe(thoughts);
+
+    const dismissed = thoughtReducer(thoughts, thoughtActions.dismiss("d"));
+    expect(dismissed.at(-1)).toMatchObject({
+      status: "dismissed",
+      dismissedAt: expect.any(String)
+    });
+  });
 });
