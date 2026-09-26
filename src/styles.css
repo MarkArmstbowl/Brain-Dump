@@ -216,7 +216,6 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .do-focus-toggle.MuiButton-root { flex: 0 0 auto; white-space: nowrap; }
 
 .category-groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: 11px; transition: grid-template-columns 220ms ease; }
-.category-groups.is-do-focused { grid-template-columns: minmax(350px, 1.8fr) repeat(3, minmax(170px, .72fr)); }
 .category-group {
   --group-color: #929c93;
   min-width: 0;
@@ -396,6 +395,11 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
   .thought-card { display: flex; flex-direction: column; }
   .thought-card .thought-text { min-height: 48px; }
   .filtered-thought-list .thought-card-editing { grid-column: 1 / -1; display: block; min-height: 0; }
+}
+
+@media (min-width: 1101px) {
+  .category-groups.is-do-focused { grid-template-columns: minmax(440px, 1.45fr) minmax(320px, 1fr); }
+  .category-groups.is-do-focused .category-group-do { grid-row: 1 / span 3; }
 }
 
 @media (max-width: 1280px) {
