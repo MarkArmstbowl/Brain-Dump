@@ -335,8 +335,9 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .completed-drawer { margin-top: 17px; border-top: 1px solid var(--bd-outline-variant); color: var(--bd-on-surface-variant); }
 .completed-drawer > summary { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 5px 2px 0; cursor: pointer; list-style: none; font-size: 12px; font-weight: 800; }
 .completed-drawer > summary::-webkit-details-marker { display: none; }
-.completed-drawer > summary::before { width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; content: ""; transform: rotate(-45deg); transition: transform 160ms ease; }
-.completed-drawer[open] > summary::before { transform: rotate(45deg) translate(-2px, -2px); }
+.completed-drawer > summary > svg { color: #52795a; }
+.completed-drawer > summary::after { width: 7px; height: 7px; margin-left: auto; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; content: ""; transform: rotate(-45deg); transition: transform 160ms ease; }
+.completed-drawer[open] > summary::after { transform: rotate(45deg) translate(-2px, -2px); }
 .completed-count { display: grid; min-width: 24px; height: 24px; place-items: center; padding: 0 6px; border-radius: 999px; background: var(--bd-surface-container); font-size: 10px; }
 .completed-list { display: grid; gap: 6px; padding: 8px 0 2px; }
 .completed-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 12px; border-radius: var(--bd-shape-medium); background: var(--bd-surface-low); }
@@ -376,7 +377,9 @@ h2 { margin: 0; font: 400 26px/1.25 Georgia, serif; }
 .thought-action-section-label { margin: 0; color: #66746b; font-size: 9px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
 .card-focus-tools { display: grid; gap: 4px; margin: 0; }
 .card-focus-actions { display: flex; align-items: stretch; gap: 6px; width: 100%; max-width: 340px; }
-.card-focus-actions .MuiButton-root { flex: 1 1 0; min-width: 0; white-space: normal; }
+.card-focus-actions .MuiButton-root { min-width: 0; white-space: nowrap; }
+.card-focus-actions .MuiButton-root:first-child:not(:only-child) { flex: .82 1 0; }
+.card-focus-actions .MuiButton-root:last-child:not(:only-child) { flex: 1.18 1 0; }
 .card-focus-actions .MuiButton-root:only-child { flex: 0 1 auto; }
 .card-ai-focus-action { display: flex; align-items: center; }
 .card-ai-focus-action .MuiButton-root { justify-content: flex-start; padding-inline: 3px; }

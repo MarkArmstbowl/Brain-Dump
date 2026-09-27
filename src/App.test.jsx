@@ -530,6 +530,8 @@ describe("Brain Dump features", () => {
 
     expect(screen.queryByText("Research presentation templates", { selector: ".thought-text" }))
       .not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Choose one thing to move forward" }))
+      .toBeVisible();
     expect(screen.getByText("Saved for later", { selector: "summary > span" })).toBeVisible();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
       status: "saved",
