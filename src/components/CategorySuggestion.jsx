@@ -52,6 +52,8 @@ export default function CategorySuggestion({
             AI suggests <strong>{CATEGORY_LABELS[aiState.suggestion.category]}</strong>
           </p>
 
+          {aiState.suggestion.reason && <p className="ai-reason">{aiState.suggestion.reason}</p>}
+          <Button size="small" disabled={aiState.loading} onClick={onRequestSuggestion}>Ask for another suggestion</Button>
           {!showOverride ? (
             <div className="ai-suggestion-actions">
               <Button

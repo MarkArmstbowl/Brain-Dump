@@ -459,3 +459,7 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
 .dump-tools { display: flex; gap: 12px; align-items: center; margin-block: 16px; }
 .thought-timestamps { display: grid; gap: 3px; color: var(--bd-on-surface-variant); margin-block: 8px; }
 @media (max-width: 560px) { .dump-tools { flex-direction: column; align-items: stretch; } }
+.v3-panel { margin-block: 16px; padding: 16px; border: 1px solid var(--bd-outline-variant); border-radius: 12px; background: var(--bd-surface); }
+.v3-panel > summary { cursor: pointer; font-weight: 700; }
+.batch-choice { padding-block: 12px; border-bottom: 1px solid var(--bd-outline-variant); }
+.thought-action-content select, .v3-panel select { padding: 8px; margin: 8px; border-radius: 8px; }

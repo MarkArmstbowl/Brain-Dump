@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS } from "../constants";
+import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 
 const STORAGE_KEY = "brain-dump-thoughts";
 
@@ -24,9 +24,10 @@ export function loadThoughts() {
           typeof thought.id === "string" &&
           typeof thought.text === "string" &&
           thought.text.trim() &&
-          (thought.category === undefined || CATEGORY_LABELS[thought.category]) &&
+          (thought.category === undefined || Object.hasOwn(CATEGORY_LABELS, thought.category)) &&
           (thought.status === undefined || ["active", "completed"].includes(thought.status)) &&
           (thought.completedAt === undefined || typeof thought.completedAt === "string") &&
+          (thought.priority === undefined || PRIORITY_LEVELS.includes(thought.priority)) &&
           (thought.isPriority === undefined || typeof thought.isPriority === "boolean") &&
           (thought.isNext === undefined || typeof thought.isNext === "boolean")
       ) &&
@@ -52,10 +53,11 @@ export function loadThoughts() {
           ...thought,
           category,
           status,
+          priority: status !== "completed" && category === "do" ? getPriority(thought) : "none",
           isPriority:
             status !== "completed" &&
             category === "do" &&
-            Boolean(thought.isPriority),
+            getPriority(thought) !== "none",
           isNext
         };
       }),

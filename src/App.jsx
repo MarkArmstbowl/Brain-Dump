@@ -19,6 +19,7 @@ import {
   getNextSuggestion,
   getPrioritySuggestion
 } from "./api/focusSuggestions";
+import BulkCategoryTools from "./components/BulkCategoryTools";
 import AiConsentDialog from "./components/AiConsentDialog";
 import CompletedThoughts from "./components/CompletedThoughts";
 import FocusTools from "./components/FocusTools";
@@ -642,6 +643,11 @@ export default function App() {
             <TextField label="Search current thoughts" value={search} onChange={(event) => setSearch(event.target.value)} />
             <Button color="error" disabled={!activeThoughts.length} onClick={() => setClearOpen(true)}>Clear current dump</Button>
           </div>
+          <Button disabled={!doThoughts.length} onClick={() => commitThoughts(thoughtActions.sortPriority(), "Do items reordered by priority.")}>Reorder by priority</Button>
+          <BulkCategoryTools thoughts={activeThoughts} onApply={(choices) => {
+            choices.forEach(({ id }) => clearAiState(id));
+            commitThoughts(thoughtActions.categorizeMany(choices), "Reviewed categories applied.");
+          }} />
           <ThoughtFilters activeFilter={activeFilter} onChange={handleFilterChange} />
           <ThoughtList
             thoughts={visibleThoughts}
@@ -653,6 +659,7 @@ export default function App() {
             onSave={handleSaveThought}
             onDelete={handleDeleteThought}
             onReorder={handleReorderThought}
+            onSetPriority={(id, priority) => commitThoughts(thoughtActions.setPriority(id, priority), "Priority level changed.")}
             onTogglePriority={handleTogglePriority}
             onSelectNext={handleSelectNext}
             planningAiState={planningAiState}

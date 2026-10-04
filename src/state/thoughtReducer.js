@@ -1,3 +1,5 @@
+import { getPriority, PRIORITY_LEVELS } from "../constants";
+
 export const thoughtActions = {
   restoreRemoved: (entries) => ({ type: "thoughts/restoreRemoved", entries }),
   clearActive: () => ({ type: "thoughts/clearActive" }),
@@ -10,6 +12,9 @@ export const thoughtActions = {
     category,
     beforeId
   }),
+  setPriority: (id, priority) => ({ type: "thought/setPriority", id, priority }),
+  sortPriority: () => ({ type: "thoughts/sortPriority" }),
+  categorizeMany: (choices) => ({ type: "thoughts/categorizeMany", choices }),
   togglePriority: (id) => ({ type: "thought/togglePriority", id }),
   selectNext: (id) => ({ type: "thought/selectNext", id }),
   clearNext: (id) => ({ type: "thought/clearNext", id }),
@@ -22,13 +27,15 @@ function keepDoOnlyState(thought) {
     return {
       ...thought,
       status: thought.status || "active",
-      isPriority: Boolean(thought.isPriority),
+      priority: getPriority(thought),
+      isPriority: getPriority(thought) !== "none",
       isNext: Boolean(thought.isNext)
     };
   }
   return {
     ...thought,
     status: thought.status || "active",
+    priority: "none",
     isPriority: false,
     isNext: false
   };
@@ -43,6 +50,7 @@ function addMany(state, newThoughts) {
       createdAt: thought.createdAt || new Date().toISOString(),
       updatedAt: thought.updatedAt || new Date().toISOString(),
       status: "active",
+      priority: "none",
       isPriority: false,
       isNext: false
     }))
@@ -86,6 +94,19 @@ function moveThought(state, id, category, beforeId) {
 
 export function thoughtReducer(state, action) {
   switch (action.type) {
+    case "thoughts/categorizeMany":
+      return action.choices.reduce((next, { id, category }) => updateThought(next, id, { category }), state);
+    case "thought/setPriority": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.category !== "do" || thought.status === "completed" || !PRIORITY_LEVELS.includes(action.priority)) return state;
+      return updateThought(state, action.id, { priority: action.priority });
+    }
+    case "thoughts/sortPriority": {
+      const sorted = state.filter((thought) => thought.category === "do" && thought.status !== "completed")
+        .sort((a, b) => PRIORITY_LEVELS.indexOf(getPriority(b)) - PRIORITY_LEVELS.indexOf(getPriority(a)));
+      let index = 0;
+      return state.map((thought) => thought.category === "do" && thought.status !== "completed" ? sorted[index++] : thought);
+    }
     case "thoughts/clearActive":
       return state.filter((thought) => thought.status === "completed");
     case "thoughts/restoreRemoved": {
@@ -110,7 +131,7 @@ export function thoughtReducer(state, action) {
     case "thought/togglePriority": {
       const thought = state.find((item) => item.id === action.id);
       if (!thought || thought.category !== "do" || thought.status === "completed") return state;
-      return updateThought(state, action.id, { isPriority: !thought.isPriority });
+      return updateThought(state, action.id, { priority: thought.isPriority ? "none" : "medium" });
     }
     case "thought/selectNext": {
       const selected = state.find((thought) => thought.id === action.id);
@@ -134,6 +155,7 @@ export function thoughtReducer(state, action) {
       return updateThought(state, action.id, {
         status: "completed",
         completedAt: new Date().toISOString(),
+        priority: "none",
         isPriority: false,
         isNext: false
       });
