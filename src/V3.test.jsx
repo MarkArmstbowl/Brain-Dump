@@ -38,3 +38,31 @@ it("searches active text, undoes deletion in original order, and confirms/undoes
   fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
   expect(JSON.parse(localStorage.getItem("brain-dump-thoughts")).map(({ id }) => id)).toEqual(["a", "b", "c"]);
 });
+
+it("records/resolves/reopens decisions, dismisses/restores thoughts and archives direct completion", async () => {
+  seed([{ id: "d", text: "Choose a course", category: "decide" },
+    { id: "l", text: "Old worry", category: "let-go" }, { id: "t", text: "Send email", category: "do" }]);
+  render(<App />); open();
+  function actionsFor(text) {
+    const card = screen.getByText(text, { selector: ".thought-text" }).closest("li");
+    card.querySelector("details").open = true;
+    return within(card);
+  }
+  fireEvent.click(actionsFor("Choose a course").getByRole("button", { name: "Record decision" }));
+  fireEvent.change(screen.getByLabelText("Decision outcome"), { target: { value: "Take art" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save decision" }));
+  fireEvent.click(actionsFor("Choose a course").getByRole("button", { name: "Mark resolved" }));
+  expect(screen.queryByText("Choose a course", { selector: ".thought-text" })).toBeNull();
+  fireEvent.click(screen.getByText("Resolved decisions (1)", { selector: "summary" }));
+  expect(screen.getByText("Decision: Take art")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Reopen decision" }));
+  expect(screen.getByText("Choose a course", { selector: ".thought-text" })).toBeVisible();
+  fireEvent.click(actionsFor("Old worry").getByRole("button", { name: "Dismiss thought" }));
+  fireEvent.click(screen.getByText("Dismissed thoughts (1)", { selector: "summary" }));
+  fireEvent.click(screen.getByRole("button", { name: "Restore dismissed thought" }));
+  expect(screen.getByText("Old worry", { selector: ".thought-text" })).toBeVisible();
+  fireEvent.click(actionsFor("Send email").getByRole("button", { name: "Mark complete" }));
+  fireEvent.click(screen.getByText("Completed", { selector: "summary > span" }));
+  fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+  expect(screen.getByText("Archived completed items (1)", { selector: "summary" })).toBeVisible();
+});

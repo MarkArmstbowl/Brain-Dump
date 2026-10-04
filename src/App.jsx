@@ -1,3 +1,4 @@
+import { isActive } from "./domain/thoughts";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
@@ -21,6 +22,7 @@ import {
 } from "./api/focusSuggestions";
 import BulkCategoryTools from "./components/BulkCategoryTools";
 import AiConsentDialog from "./components/AiConsentDialog";
+import ThoughtCollections from "./components/ThoughtCollections";
 import CompletedThoughts from "./components/CompletedThoughts";
 import FocusTools from "./components/FocusTools";
 import ThoughtComposer from "./components/ThoughtComposer";
@@ -124,7 +126,7 @@ export default function App() {
   }, []);
 
   const activeThoughts = useMemo(
-    () => thoughts.filter((thought) => thought.status !== "completed"),
+    () => thoughts.filter((thought) => isActive(thought)),
     [thoughts]
   );
   const completedThoughts = useMemo(
@@ -150,7 +152,11 @@ export default function App() {
     const nextThoughts = thoughtReducer(thoughts, action);
     if (nextThoughts === thoughts) return;
     clearPlanningAiState();
-    dispatchThoughts(action);
+    thoughts.forEach((thought) => {
+      const next = nextThoughts.find((item) => item.id === thought.id);
+      if (!next || next.text !== thought.text || next.category !== thought.category || next.status !== thought.status) clearAiState(thought.id);
+    });
+    dispatchThoughts(thoughtActions.replace(nextThoughts));
     setStorageError(saveThoughts(nextThoughts));
     setAnnouncement(message);
     setFeedback({ message, undoThoughtId, undoAction });
@@ -312,7 +318,7 @@ export default function App() {
 
   function handleTogglePriority(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do" || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || !isActive(thought)) return;
 
     const isPriority = !thought.isPriority;
     commitThoughts(
@@ -323,7 +329,7 @@ export default function App() {
 
   function handleSelectNext(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do" || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || !isActive(thought)) return;
 
     commitThoughts(
       thoughtActions.selectNext(id),
@@ -340,7 +346,7 @@ export default function App() {
 
   function handleCompleteThought(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.status === "completed") return;
+    if (!thought || !isActive(thought)) return;
     clearAiState(id);
     commitThoughts(
       thoughtActions.complete(id),
@@ -659,6 +665,10 @@ export default function App() {
             onSave={handleSaveThought}
             onDelete={handleDeleteThought}
             onReorder={handleReorderThought}
+            onComplete={handleCompleteThought}
+            onRecordDecision={(id, decision) => commitThoughts(thoughtActions.recordDecision(id, decision), "Decision recorded.")}
+            onResolve={(id) => commitThoughts(thoughtActions.resolve(id), "Decision resolved.", { undoThoughtId: id })}
+            onDismiss={(id) => commitThoughts(thoughtActions.dismiss(id), "Thought dismissed.", { undoThoughtId: id })}
             onSetPriority={(id, priority) => commitThoughts(thoughtActions.setPriority(id, priority), "Priority level changed.")}
             onTogglePriority={handleTogglePriority}
             onSelectNext={handleSelectNext}
@@ -672,9 +682,12 @@ export default function App() {
             onOverrideSuggestion={(id, category) => applyAiChoice(id, category, "overridden")}
           />
 
+          <ThoughtCollections thoughts={thoughts} onRestore={handleRestoreThought}
+            onUnarchive={(id) => commitThoughts(thoughtActions.unarchive(id), "Thought returned to Completed.")} />
           <CompletedThoughts
             thoughts={completedThoughts}
             onRestore={handleRestoreThought}
+            onArchive={(id) => commitThoughts(thoughtActions.archive(id), "Completed thought archived.")}
           />
         </section>
       </div>
@@ -702,11 +715,11 @@ export default function App() {
 
       <Dialog open={clearOpen} onClose={() => setClearOpen(false)}>
         <DialogTitle>Clear current dump?</DialogTitle>
-        <DialogContent>Remove all {activeThoughts.length} active thoughts? Completed items are kept. You can undo this action.</DialogContent>
+        <DialogContent>Remove all {activeThoughts.length} active thoughts? Completed and other inactive items are kept. You can undo this action.</DialogContent>
         <DialogActions>
           <Button onClick={() => setClearOpen(false)}>Cancel</Button>
           <Button color="error" onClick={() => {
-            const entries = thoughts.map((thought, index) => ({ thought, index })).filter(({ thought }) => thought.status !== "completed");
+            const entries = thoughts.map((thought, index) => ({ thought, index })).filter(({ thought }) => isActive(thought));
             entries.forEach(({ thought }) => clearAiState(thought.id));
             setClearOpen(false);
             setEditingId(null);

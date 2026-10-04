@@ -1,3 +1,4 @@
+import { THOUGHT_STATUSES } from "../domain/thoughts";
 import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 
 const STORAGE_KEY = "brain-dump-thoughts";
@@ -25,8 +26,9 @@ export function loadThoughts() {
           typeof thought.text === "string" &&
           thought.text.trim() &&
           (thought.category === undefined || Object.hasOwn(CATEGORY_LABELS, thought.category)) &&
-          (thought.status === undefined || ["active", "completed"].includes(thought.status)) &&
-          (thought.completedAt === undefined || typeof thought.completedAt === "string") &&
+          (thought.status === undefined || THOUGHT_STATUSES.includes(thought.status)) &&
+          ["createdAt", "updatedAt", "completedAt", "resolvedAt", "dismissedAt", "decision"].every((key) => thought[key] === undefined || typeof thought[key] === "string") &&
+          (thought.events === undefined || Array.isArray(thought.events) && thought.events.every((event) => event && typeof event.type === "string" && typeof event.at === "string")) &&
           (thought.priority === undefined || PRIORITY_LEVELS.includes(thought.priority)) &&
           (thought.isPriority === undefined || typeof thought.isPriority === "boolean") &&
           (thought.isNext === undefined || typeof thought.isNext === "boolean")
@@ -44,7 +46,7 @@ export function loadThoughts() {
         const category = thought.category || "unsorted";
         const status = thought.status || "active";
         const isNext =
-          status !== "completed" &&
+          status === "active" &&
           category === "do" &&
           Boolean(thought.isNext) &&
           !hasNext;
@@ -53,9 +55,9 @@ export function loadThoughts() {
           ...thought,
           category,
           status,
-          priority: status !== "completed" && category === "do" ? getPriority(thought) : "none",
+          priority: status === "active" && category === "do" ? getPriority(thought) : "none",
           isPriority:
-            status !== "completed" &&
+            status === "active" &&
             category === "do" &&
             getPriority(thought) !== "none",
           isNext
