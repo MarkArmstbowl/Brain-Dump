@@ -13,6 +13,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { CATEGORY_LABELS } from "./constants";
 import { getCategorySuggestion } from "./api/categorySuggestion";
@@ -43,24 +47,6 @@ import DumpHistory from "./components/DumpHistory";
 import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
 const AI_REQUEST_TIMEOUT_MS = 15_000;
-
-function TabNumberBadge({ children }) {
-  return (
-    <Box
-      component="span"
-      aria-hidden="true"
-      sx={{
-        font: "700 9px/1 Georgia, serif",
-        letterSpacing: "0.08em",
-        color: "inherit",
-        opacity: 0.7,
-        ".Mui-selected &": { opacity: 0.8 }
-      }}
-    >
-      {children}
-    </Box>
-  );
-}
 
 function TabCountBadge({ count }) {
   return (
@@ -585,7 +571,7 @@ export default function App() {
             aria-controls="capture-panel"
             label={
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <TabNumberBadge>01</TabNumberBadge>
+                <EditNoteRoundedIcon fontSize="small" />
                 Capture
               </Box>
             }
@@ -596,18 +582,21 @@ export default function App() {
             aria-controls="organize-panel"
             label={
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-                <TabNumberBadge>02</TabNumberBadge>
+                <DashboardRoundedIcon fontSize="small" />
                 Organize
                 <TabCountBadge count={activeThoughts.length} />
               </Box>
             }
           />
-          <Tab value="history" id="history-tab" aria-controls="history-panel" label="History" />
-          <Tab value="review" id="review-tab" aria-controls="review-panel" label="Review" />
+          <Tab value="history" id="history-tab" aria-controls="history-panel" label="History" icon={<HistoryRoundedIcon fontSize="small" />} iconPosition="start" />
+          <Tab value="review" id="review-tab" aria-controls="review-panel" label="Review" icon={<InsightsRoundedIcon fontSize="small" />} iconPosition="start" />
         </Tabs>
       </nav>
 
-      <p className="current-dump-name">Current dump: {workspace.dumps.find(({ id }) => id === workspace.currentId)?.title}</p>
+      <div className="session-strip">
+        <p className="current-dump-name">Current dump: {workspace.dumps.find(({ id }) => id === workspace.currentId)?.title}</p>
+        <span className="session-count">{activeThoughts.length} active · {completedThoughts.length} completed</span>
+      </div>
       <ThoughtReminders thoughts={allSavedThoughts} onRestore={handleRestoreThought}
         onAcknowledge={(id) => commitWorkspace(updateSavedThought(workspace, id, thoughtActions.acknowledgeReminder(id)), "Reminder dismissed for this revisit date.")} />
       <div className="workspace">
@@ -628,6 +617,11 @@ export default function App() {
           aria-labelledby="capture-tab"
           hidden={activeView !== "capture"}
         >
+          <div className="capture-intro">
+            <p className="section-kicker">LESS MENTAL CLUTTER. MORE CLARITY.</p>
+            <h2>Make space for what matters.</h2>
+            <p>Get it out of your head. Find a place for it. Take one small step.</p>
+          </div>
           <div className="capture-stage">
             <span className="ambient-card ambient-card-left" aria-hidden="true" />
             <span className="ambient-card ambient-card-right" aria-hidden="true" />
@@ -636,6 +630,11 @@ export default function App() {
             <span className="ambient-spark ambient-spark-one" aria-hidden="true">✦</span>
             <span className="ambient-spark ambient-spark-two" aria-hidden="true">✧</span>
             <ThoughtComposer onAddThoughts={handleAddThoughts} />
+          </div>
+          <div className="capture-guide" aria-label="Ways to organize your thoughts">
+            <div className="guide-do"><span aria-hidden="true">↗</span><div><h3>Do</h3><p>Something you can act on.</p></div></div>
+            <div className="guide-decide"><span aria-hidden="true">◇</span><div><h3>Decide</h3><p>A choice that needs clarity.</p></div></div>
+            <div className="guide-let-go"><span aria-hidden="true">≈</span><div><h3>Let Go</h3><p>Something you can release.</p></div></div>
           </div>
           <div className="capture-aftercare">
             <p className="privacy-note">
@@ -699,9 +698,9 @@ export default function App() {
 
           <div className="dump-tools">
             <TextField label="Search current thoughts" value={search} onChange={(event) => setSearch(event.target.value)} />
+            <Button disabled={!doThoughts.length} onClick={() => commitThoughts(thoughtActions.sortPriority(), "Do items reordered by priority.")}>Reorder by priority</Button>
             <Button color="error" disabled={!activeThoughts.length} onClick={() => setClearOpen(true)}>Clear current dump</Button>
           </div>
-          <Button disabled={!doThoughts.length} onClick={() => commitThoughts(thoughtActions.sortPriority(), "Do items reordered by priority.")}>Reorder by priority</Button>
           <BulkCategoryTools thoughts={activeThoughts} onApply={(choices) => {
             choices.forEach(({ id }) => clearAiState(id));
             commitThoughts(thoughtActions.categorizeMany(choices), "Reviewed categories applied.");

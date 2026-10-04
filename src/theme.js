@@ -15,17 +15,17 @@ const colors = {
   tertiary: "#71596f",
   tertiaryContainer: "#f3e2f0",
   onTertiaryContainer: "#3f2d3d",
-  surface: "#fffdf8",
+  surface: "#fffefa",
   surfaceDim: "#e8e7df",
   surfaceContainerLowest: "#ffffff",
-  surfaceContainerLow: "#f6f5ee",
+  surfaceContainerLow: "#f7f7f2",
   surfaceContainer: "#f0f1e9",
   surfaceContainerHigh: "#e9ede4",
   surfaceContainerHighest: "#e2e7de",
   onSurface: "#253b32",
   onSurfaceVariant: "#5f6d65",
   outline: "#77837b",
-  outlineVariant: "#d2dbd0",
+  outlineVariant: "#dfe4dc",
   error: "#984f3d",
   onError: "#ffffff",
   errorContainer: "#ffdad0",
@@ -173,8 +173,12 @@ const theme = createTheme({
           width: 40,
           height: 40,
           borderRadius: 12,
-          color: colors.error,
-          "&:hover": { backgroundColor: colors.errorContainer }
+          color: colors.onSurfaceVariant,
+          "&:hover": { backgroundColor: colors.surfaceContainer },
+          "&.MuiIconButton-colorError": {
+            color: colors.error,
+            "&:hover": { backgroundColor: colors.errorContainer }
+          }
         }
       }
     },
