@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "./App";
 
-beforeEach(() => localStorage.clear());
-afterEach(cleanup);
+beforeEach(() => { vi.restoreAllMocks(); localStorage.clear(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const seed = (thoughts) => localStorage.setItem("brain-dump-thoughts", JSON.stringify(thoughts));
 const open = () => fireEvent.click(screen.getByRole("tab", { name: /Organize/i }));
 
@@ -54,7 +54,7 @@ it("records/resolves/reopens decisions, dismisses/restores thoughts and archives
   fireEvent.click(actionsFor("Choose a course").getByRole("button", { name: "Mark resolved" }));
   expect(screen.queryByText("Choose a course", { selector: ".thought-text" })).toBeNull();
   fireEvent.click(screen.getByText("Resolved decisions (1)", { selector: "summary" }));
-  expect(screen.getByText("Decision: Take art")).toBeVisible();
+  expect(within(screen.getByText("Resolved decisions (1)", { selector: "summary" }).closest("details")).getByText("Decision: Take art")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Reopen decision" }));
   expect(screen.getByText("Choose a course", { selector: ".thought-text" })).toBeVisible();
   fireEvent.click(actionsFor("Old worry").getByRole("button", { name: "Dismiss thought" }));
@@ -107,4 +107,52 @@ it("starts a separate dump and opens/searches the previous dump after reload", (
   expect(opened.queryByText("Pick a course")).toBeNull();
   open();
   expect(screen.queryByText("Email professor", { selector: ".thought-text" })).toBeNull();
+});
+
+it("saves a personal reflection and displays outcomes, summaries, trends and wellness links", () => {
+  seed([{ id: "r", text: "Choose a course", category: "decide", status: "resolved", decision: "Art" },
+    { id: "c", text: "Send email", category: "do", status: "completed", completedAt: "2026-10-03T12:00:00Z" }]);
+  const view = render(<App />);
+  fireEvent.click(screen.getByRole("tab", { name: "Review" }));
+  expect(screen.getByText(/2 thoughts in this dump: 0 active, 1 completed, 1 resolved/)).toBeVisible();
+  expect(screen.getByRole("table", { name: "Category distribution across dumps" })).toBeVisible();
+  expect(screen.getByRole("table", { name: "Completion and resolution across dumps" })).toBeVisible();
+  fireEvent.click(screen.getByText("Review completed and resolved thoughts (2)", { selector: "summary" }));
+  expect(within(screen.getByRole("tabpanel", { name: "Review" })).getByText("Decision: Art")).toBeVisible();
+  expect(screen.getByRole("link", { name: /NHS: Every Mind Matters/ })).toHaveAttribute("rel", "noopener noreferrer");
+  fireEvent.change(screen.getByLabelText("Personal reflection"), { target: { value: "One step at a time." } });
+  fireEvent.click(screen.getByRole("button", { name: "Save reflection" }));
+  view.unmount(); render(<App />);
+  fireEvent.click(screen.getByRole("tab", { name: "Review" }));
+  expect(screen.getByLabelText("Personal reflection")).toHaveValue("One step at a time.");
+});
+it("continues to show saved reminders after starting another dump and returns them to that dump", () => {
+  seed([{ id: "cross", text: "Plan a trip", category: "do", status: "saved", revisitDate: "2020-01-01" }]);
+  render(<App />);
+  fireEvent.click(screen.getByRole("tab", { name: "History" }));
+  fireEvent.change(screen.getByLabelText("New dump name"), { target: { value: "New" } });
+  fireEvent.click(screen.getByRole("button", { name: "Start new dump" }));
+  expect(screen.getByText(/Revisit reminder: Plan a trip/)).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Return to active" }));
+  open();
+  expect(screen.getByText("Plan a trip", { selector: ".thought-text" })).toBeVisible();
+  expect(screen.queryByText(/Revisit reminder: Plan a trip/)).toBeNull();
+});
+
+it("still captures thoughts in memory when browser storage cannot be read", () => {
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("Storage disabled"); });
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Thought 1"), { target: { value: "Keep this page open" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add Thought" }));
+  open();
+  expect(screen.getByText("Keep this page open", { selector: ".thought-text" })).toBeVisible();
+  expect(screen.getByText(/Your changes are visible, but couldn't be saved/)).toBeVisible();
+});
+it("preserves corrupt history and unfinished input instead of overwriting either", () => {
+  localStorage.setItem("brain-dump-workspace-v3", "corrupt");
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Thought 1"), { target: { value: "Unfinished" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add Thought" }));
+  expect(screen.getByLabelText("Thought 1")).toHaveValue("Unfinished");
+  expect(localStorage.getItem("brain-dump-workspace-v3")).toBe("corrupt");
 });

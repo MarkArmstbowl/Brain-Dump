@@ -1,3 +1,4 @@
+import { savedThoughts, updateSavedThought, returnSavedThought } from "./state/savedThoughts";
 import { isActive } from "./domain/thoughts";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Badge from "@mui/material/Badge";
@@ -37,6 +38,7 @@ import {
   savePlanningAiConsent
 } from "./storage/aiConsentStorage";
 import { loadWorkspace, saveWorkspace, startDump, updateCurrentDump } from "./storage/workspaceStorage";
+import ReviewInsights from "./components/ReviewInsights";
 import DumpHistory from "./components/DumpHistory";
 import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
@@ -99,6 +101,7 @@ export default function App() {
   const [activeView, setActiveView] = useState("capture");
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
+  const feedbackSequence = useRef(0);
   const [feedback, setFeedback] = useState({ message: "", undoThoughtId: null, undoAction: null });
   const [aiStates, setAiStates] = useState({});
   const [hasAiConsent, setHasAiConsent] = useState(loadAiConsent);
@@ -147,45 +150,48 @@ export default function App() {
     () => activeThoughts.filter((thought) => thought.category === "do"),
     [activeThoughts]
   );
+  const allSavedThoughts = useMemo(() => savedThoughts(workspace), [workspace]);
   const currentNext = useMemo(
     () => doThoughts.find((thought) => thought.isNext) || null,
     [doThoughts]
   );
 
-  function commitThoughts(action, message, { undoThoughtId = null, undoAction = null } = {}) {
-    if (initialData.blocked) return false;
-    const nextThoughts = thoughtReducer(thoughts, action);
-    if (nextThoughts === thoughts) return false;
+  function showFeedback(value) {
+    setFeedback({ ...value, id: ++feedbackSequence.current });
+  }
+
+  function commitWorkspace(nextWorkspace, message, { undoThoughtId = null, undoAction = null, requireSave = false } = {}) {
+    if (initialData.blocked || nextWorkspace === workspace) return false;
+    const error = saveWorkspace(nextWorkspace);
+    setStorageError(error);
+    if (requireSave && error) return false;
+    const nextThoughts = nextWorkspace.dumps.find(({ id }) => id === nextWorkspace.currentId).thoughts;
     clearPlanningAiState();
     thoughts.forEach((thought) => {
       const next = nextThoughts.find((item) => item.id === thought.id);
       if (!next || next.text !== thought.text || next.category !== thought.category || next.status !== thought.status) clearAiState(thought.id);
     });
     dispatchThoughts(thoughtActions.replace(nextThoughts));
-    const nextWorkspace = updateCurrentDump(workspace, nextThoughts);
     setWorkspace(nextWorkspace);
-    setStorageError(saveWorkspace(nextWorkspace));
     setAnnouncement(message);
-    setFeedback({ message, undoThoughtId, undoAction });
+    showFeedback({ message, undoThoughtId, undoAction });
     return true;
   }
 
+  function commitThoughts(action, message, options = {}) {
+    const nextThoughts = thoughtReducer(thoughts, action);
+    if (nextThoughts === thoughts) return false;
+    return commitWorkspace(updateCurrentDump(workspace, nextThoughts), message, options);
+  }
+
   function handleStartDump(title) {
-    if (initialData.blocked) return false;
     const nextWorkspace = startDump(updateCurrentDump(workspace, thoughts), title);
-    const error = saveWorkspace(nextWorkspace);
-    setStorageError(error);
-    if (error) return false;
-    thoughts.forEach(({ id }) => clearAiState(id));
-    clearPlanningAiState();
+    if (!commitWorkspace(nextWorkspace, "Previous dump saved. New dump started.", { requireSave: true })) return false;
     setPendingAiThoughtId(null);
     setPendingPlanningAction(null);
     setEditingId(null);
     setSearch("");
     setActiveFilter("all");
-    setWorkspace(nextWorkspace);
-    dispatchThoughts(thoughtActions.replace([]));
-    setFeedback({ message: "Previous dump saved. New dump started.", undoThoughtId: null, undoAction: null });
     setAnnouncement("New dump started. Previous thoughts are available in History.");
     return true;
   }
@@ -384,7 +390,10 @@ export default function App() {
   }
 
   function handleRestoreThought(id) {
-    commitThoughts(
+    if (allSavedThoughts.some((thought) => thought.id === id)) {
+      return commitWorkspace(returnSavedThought(workspace, id), "Saved thought returned to the current dump.");
+    }
+    return commitThoughts(
       thoughtActions.restore(id),
       "Thought restored to your active list."
     );
@@ -539,7 +548,7 @@ export default function App() {
   function switchView(view) {
     setActiveView(view);
     setEditingId(null);
-    setAnnouncement(`${view === "capture" ? "Capture" : view === "history" ? "History" : "Organize"} view opened.`);
+    setAnnouncement(`${view === "capture" ? "Capture" : view === "history" ? "History" : view === "review" ? "Review" : "Organize"} view opened.`);
   }
 
   return (
@@ -566,7 +575,7 @@ export default function App() {
         <Tabs
           value={activeView}
           onChange={(_event, value) => switchView(value)}
-          aria-label="Capture and organize"
+          aria-label="Brain Dump workspaces"
           className="view-tabs"
           selectionFollowsFocus
         >
@@ -594,11 +603,21 @@ export default function App() {
             }
           />
           <Tab value="history" id="history-tab" aria-controls="history-panel" label="History" />
+          <Tab value="review" id="review-tab" aria-controls="review-panel" label="Review" />
         </Tabs>
       </nav>
 
       <p className="current-dump-name">Current dump: {workspace.dumps.find(({ id }) => id === workspace.currentId)?.title}</p>
+      <ThoughtReminders thoughts={allSavedThoughts} onRestore={handleRestoreThought}
+        onAcknowledge={(id) => commitWorkspace(updateSavedThought(workspace, id, thoughtActions.acknowledgeReminder(id)), "Reminder dismissed for this revisit date.")} />
       <div className="workspace">
+        <section id="review-panel" className="workspace-view" role="tabpanel" aria-labelledby="review-tab" hidden={activeView !== "review"}>
+          <ReviewInsights key={workspace.currentId} workspace={workspace} onSaveReflection={(reflection) => {
+            if (initialData.blocked) return;
+            const next = { ...workspace, dumps: workspace.dumps.map((dump) => dump.id === workspace.currentId ? { ...dump, reflection } : dump) };
+            commitWorkspace(next, "Reflection saved.");
+          }} />
+        </section>
         <section id="history-panel" className="workspace-view" role="tabpanel" aria-labelledby="history-tab" hidden={activeView !== "history"}>
           <DumpHistory workspace={workspace} onStart={handleStartDump} />
         </section>
@@ -716,10 +735,8 @@ export default function App() {
             onOverrideSuggestion={(id, category) => applyAiChoice(id, category, "overridden")}
           />
 
-          <ThoughtReminders thoughts={thoughts} onRestore={handleRestoreThought}
-            onAcknowledge={(id) => commitThoughts(thoughtActions.acknowledgeReminder(id), "Reminder dismissed for this revisit date.")} />
-          <SavedThoughts thoughts={thoughts.filter((thought) => thought.status === "saved")} onRestore={handleRestoreThought}
-            onSetDate={(id, date) => commitThoughts(thoughtActions.setRevisitDate(id, date), "Revisit date updated.")} />
+          <SavedThoughts thoughts={allSavedThoughts} onRestore={handleRestoreThought}
+            onSetDate={(id, date) => commitWorkspace(updateSavedThought(workspace, id, thoughtActions.setRevisitDate(id, date)), "Revisit date updated.")} />
           <ThoughtCollections thoughts={thoughts} onRestore={handleRestoreThought}
             onUnarchive={(id) => commitThoughts(thoughtActions.unarchive(id), "Thought returned to Completed.")} />
           <CompletedThoughts
@@ -767,12 +784,12 @@ export default function App() {
       </Dialog>
 
       <Snackbar
-        key={feedback.message}
+        key={feedback.id}
         open={Boolean(feedback.message)}
         autoHideDuration={3600}
         onClose={(_event, reason) => {
           if (reason !== "clickaway") {
-            setFeedback({ message: "", undoThoughtId: null, undoAction: null });
+            showFeedback({ message: "", undoThoughtId: null, undoAction: null });
           }
         }}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
@@ -791,7 +808,7 @@ export default function App() {
               Undo
             </Button>
           ) : undefined}
-          onClose={() => setFeedback({ message: "", undoThoughtId: null, undoAction: null })}
+          onClose={() => showFeedback({ message: "", undoThoughtId: null, undoAction: null })}
           role="status"
         >
           {feedback.message}

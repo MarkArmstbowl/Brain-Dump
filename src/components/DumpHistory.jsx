@@ -44,6 +44,7 @@ export default function DumpHistory({ workspace, onStart }) {
       <ul>{opened.matchedThoughts.map((thought) => <li key={thought.id}>
         <p>{thought.text}</p><p>{CATEGORY_LABELS[thought.category]} · {thought.status}</p>
         {thought.decision && <p>Decision: {thought.decision}</p>}
+        {thought.returnedToDumpId && <p>Returned to a newer dump.</p>}
         <ThoughtTimestamps thought={thought} />
       </li>)}</ul>
       <Button onClick={() => setOpenedId(null)}>Close previous dump</Button>

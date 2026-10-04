@@ -228,7 +228,9 @@ export function thoughtReducer(state, action) {
         resolvedAt: undefined,
         dismissedAt: undefined,
         revisitDate: undefined,
-        reminderAcknowledgedDate: undefined
+        reminderAcknowledgedDate: undefined,
+        returnedToDumpId: undefined,
+        returnedAt: undefined
       });
     }
     default:

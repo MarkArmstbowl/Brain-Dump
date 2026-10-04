@@ -39,3 +39,19 @@ it("reports storage failures instead of claiming history was saved", () => {
   vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Quota"); });
   expect(saveWorkspace(workspace)).toContain("couldn't be saved");
 });
+
+it("keeps the workspace authoritative if the compatibility cache cannot be written", () => {
+  const { workspace } = loadWorkspace();
+  const original = Storage.prototype.setItem;
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (key, value) {
+    if (key === "brain-dump-thoughts") throw new Error("Cache full");
+    return original.call(this, key, value);
+  });
+  expect(saveWorkspace(workspace)).toBe("");
+  expect(loadWorkspace().workspace.currentId).toBe(workspace.currentId);
+});
+
+it("allows in-memory capture when storage is inaccessible rather than treating it as corrupt history", () => {
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("Disabled"); });
+  expect(loadWorkspace()).toMatchObject({ thoughts: [], blocked: false });
+});

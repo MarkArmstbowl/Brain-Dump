@@ -8,6 +8,7 @@ export default function SavedThoughts({ thoughts, onRestore, onSetDate }) {
     <p>Revisit reminders appear while the app is open, or when you reopen it after the date.</p>
     <ul>{thoughts.map((thought) => <li key={thought.id}>
       <p>{thought.text}</p>
+      {thought.dumpTitle && <small>From {thought.dumpTitle}</small>}
       <ThoughtTimestamps thought={thought} />
       <label>Revisit date<input type="date" aria-label={`Revisit date for ${thought.text}`} value={thought.revisitDate || ""}
         onChange={(event) => onSetDate(thought.id, event.target.value)} /></label>

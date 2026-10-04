@@ -57,6 +57,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), aiSuggestionApi(env)],
     test: {
       environment: "jsdom",
+      maxWorkers: 1,
+      testTimeout: 30000,
       setupFiles: "./src/test/setup.js",
       css: true
     }

@@ -466,3 +466,8 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
 .history-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-block: 16px; }
 .current-dump-name { color: var(--bd-on-surface-variant); }
 .history-filters input[type="date"], .lifecycle-tools input[type="date"], .v3-panel input[type="date"] { display: block; padding: 8px; margin-block: 8px; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+.table-scroll table { width: 100%; border-collapse: collapse; margin-block: 12px; }
+.table-scroll caption { text-align: left; font-weight: 600; padding-block: 8px; }
+.table-scroll th, .table-scroll td { text-align: left; padding: 10px; border-bottom: 1px solid var(--bd-outline-variant); }
+.view-tabs .MuiTabs-list { flex-wrap: wrap; }

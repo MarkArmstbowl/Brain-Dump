@@ -21,8 +21,13 @@ export function normalizeWorkspace(value) {
   }) };
 }
 export function loadWorkspace() {
+  let saved;
+  try { saved = localStorage.getItem(WORKSPACE_KEY); }
+  catch {
+    const workspace = createWorkspace();
+    return { workspace, thoughts: [], error: "Browser storage is unavailable. You can still capture thoughts, but keep this page open to avoid losing them.", blocked: false };
+  }
   try {
-    const saved = localStorage.getItem(WORKSPACE_KEY);
     if (saved !== null) {
       const workspace = normalizeWorkspace(JSON.parse(saved));
       return { workspace, thoughts: workspace.dumps.find(({ id }) => id === workspace.currentId).thoughts, error: "", blocked: false };
@@ -43,7 +48,7 @@ export function saveWorkspace(workspace) {
     if (legacy !== null && localStorage.getItem(BACKUP_KEY) === null) localStorage.setItem(BACKUP_KEY, legacy);
     localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
     try { localStorage.setItem(THOUGHT_STORAGE_KEY, JSON.stringify(current.thoughts)); }
-    catch { return "Your history was saved, but the older-version thought cache could not be updated."; }
+    catch { /* The versioned workspace is authoritative and already saved. */ }
     return "";
   } catch { return SAVE_ERROR; }
 }

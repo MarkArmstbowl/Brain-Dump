@@ -10,7 +10,7 @@ export function normalizeThoughts(value) {
     typeof thought.id === "string" && thought.id && typeof thought.text === "string" && thought.text.trim() &&
     (thought.category === undefined || Object.hasOwn(CATEGORY_LABELS, thought.category)) &&
     (thought.status === undefined || THOUGHT_STATUSES.includes(thought.status)) &&
-    ["createdAt", "updatedAt", "completedAt", "resolvedAt", "dismissedAt", "savedAt", "decision"].every((key) => thought[key] === undefined || typeof thought[key] === "string") &&
+    ["createdAt", "updatedAt", "completedAt", "resolvedAt", "dismissedAt", "savedAt", "decision", "returnedAt", "returnedToDumpId", "originDumpId"].every((key) => thought[key] === undefined || typeof thought[key] === "string") &&
     (thought.revisitDate === undefined || validRevisitDate(thought.revisitDate)) &&
     (thought.reminderAcknowledgedDate === undefined || validRevisitDate(thought.reminderAcknowledgedDate)) &&
     (thought.deferredCount === undefined || Number.isInteger(thought.deferredCount) && thought.deferredCount >= 0) &&
