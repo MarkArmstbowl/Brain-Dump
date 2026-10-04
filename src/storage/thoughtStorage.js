@@ -1,4 +1,4 @@
-import { THOUGHT_STATUSES } from "../domain/thoughts";
+import { THOUGHT_STATUSES, validRevisitDate } from "../domain/thoughts";
 import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 
 const STORAGE_KEY = "brain-dump-thoughts";
@@ -27,7 +27,10 @@ export function loadThoughts() {
           thought.text.trim() &&
           (thought.category === undefined || Object.hasOwn(CATEGORY_LABELS, thought.category)) &&
           (thought.status === undefined || THOUGHT_STATUSES.includes(thought.status)) &&
-          ["createdAt", "updatedAt", "completedAt", "resolvedAt", "dismissedAt", "decision"].every((key) => thought[key] === undefined || typeof thought[key] === "string") &&
+          ["createdAt", "updatedAt", "completedAt", "resolvedAt", "dismissedAt", "savedAt", "decision"].every((key) => thought[key] === undefined || typeof thought[key] === "string") &&
+          (thought.revisitDate === undefined || validRevisitDate(thought.revisitDate)) &&
+          (thought.reminderAcknowledgedDate === undefined || validRevisitDate(thought.reminderAcknowledgedDate)) &&
+          (thought.deferredCount === undefined || Number.isInteger(thought.deferredCount) && thought.deferredCount >= 0) &&
           (thought.events === undefined || Array.isArray(thought.events) && thought.events.every((event) => event && typeof event.type === "string" && typeof event.at === "string")) &&
           (thought.priority === undefined || PRIORITY_LEVELS.includes(thought.priority)) &&
           (thought.isPriority === undefined || typeof thought.isPriority === "boolean") &&

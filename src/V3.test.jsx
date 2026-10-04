@@ -66,3 +66,24 @@ it("records/resolves/reopens decisions, dismisses/restores thoughts and archives
   fireEvent.click(screen.getByRole("button", { name: "Archive" }));
   expect(screen.getByText("Archived completed items (1)", { selector: "summary" })).toBeVisible();
 });
+
+it("saves a thought with a revisit date, restores it after reload and acknowledges overdue reminders", async () => {
+  seed([{ id: "s", text: "Plan a trip", category: "do" }]);
+  const view = render(<App />); open();
+  const card = screen.getByText("Plan a trip", { selector: ".thought-text" }).closest("li");
+  card.querySelector("details").open = true;
+  fireEvent.click(within(card).getByRole("button", { name: "Save for later" }));
+  fireEvent.change(screen.getByLabelText("Revisit date"), { target: { value: "2020-01-01" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save thought for later" }));
+  expect(screen.queryByText("Plan a trip", { selector: ".thought-text" })).toBeNull();
+  expect(screen.getByText(/Revisit reminder: Plan a trip/)).toBeVisible();
+  view.unmount();
+  render(<App />); open();
+  expect(screen.getByText(/Revisit reminder: Plan a trip/)).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Dismiss reminder" }));
+  expect(screen.queryByText(/Revisit reminder: Plan a trip/)).toBeNull();
+  fireEvent.click(screen.getByText("Saved for later (1)", { selector: "summary" }));
+  expect(screen.getByLabelText("Revisit date for Plan a trip")).toHaveValue("2020-01-01");
+  fireEvent.click(screen.getByRole("button", { name: "Return to active" }));
+  expect(screen.getByText("Plan a trip", { selector: ".thought-text" })).toBeVisible();
+});

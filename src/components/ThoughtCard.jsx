@@ -35,6 +35,7 @@ export default function ThoughtCard({
   onRecordDecision,
   onResolve,
   onDismiss,
+  onSaveLater,
   onSelectNext,
   planningAiState,
   onRequestFirstStep,
@@ -145,7 +146,7 @@ export default function ThoughtCard({
 
           <div className="thought-action-section">
             <p className="thought-action-section-label">Manage</p>
-            <ThoughtLifecycleTools thought={thought} onComplete={onComplete} onRecordDecision={onRecordDecision} onResolve={onResolve} onDismiss={onDismiss} />
+            <ThoughtLifecycleTools thought={thought} onComplete={onComplete} onRecordDecision={onRecordDecision} onResolve={onResolve} onDismiss={onDismiss} onSaveLater={onSaveLater} />
             {thought.category === "do" && <label>Priority level
               <select aria-label={`Priority level for ${thought.text}`} value={getPriority(thought)} onChange={(event) => onSetPriority(thought.id, event.target.value)}>
                 {PRIORITY_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}

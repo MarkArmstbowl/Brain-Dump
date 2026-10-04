@@ -22,6 +22,8 @@ import {
 } from "./api/focusSuggestions";
 import BulkCategoryTools from "./components/BulkCategoryTools";
 import AiConsentDialog from "./components/AiConsentDialog";
+import SavedThoughts from "./components/SavedThoughts";
+import ThoughtReminders from "./components/ThoughtReminders";
 import ThoughtCollections from "./components/ThoughtCollections";
 import CompletedThoughts from "./components/CompletedThoughts";
 import FocusTools from "./components/FocusTools";
@@ -665,6 +667,7 @@ export default function App() {
             onSave={handleSaveThought}
             onDelete={handleDeleteThought}
             onReorder={handleReorderThought}
+            onSaveLater={(id, date) => commitThoughts(thoughtActions.saveLater(id, date), "Thought saved for later.", { undoThoughtId: id })}
             onComplete={handleCompleteThought}
             onRecordDecision={(id, decision) => commitThoughts(thoughtActions.recordDecision(id, decision), "Decision recorded.")}
             onResolve={(id) => commitThoughts(thoughtActions.resolve(id), "Decision resolved.", { undoThoughtId: id })}
@@ -682,6 +685,10 @@ export default function App() {
             onOverrideSuggestion={(id, category) => applyAiChoice(id, category, "overridden")}
           />
 
+          <ThoughtReminders thoughts={thoughts} onRestore={handleRestoreThought}
+            onAcknowledge={(id) => commitThoughts(thoughtActions.acknowledgeReminder(id), "Reminder dismissed for this revisit date.")} />
+          <SavedThoughts thoughts={thoughts.filter((thought) => thought.status === "saved")} onRestore={handleRestoreThought}
+            onSetDate={(id, date) => commitThoughts(thoughtActions.setRevisitDate(id, date), "Revisit date updated.")} />
           <ThoughtCollections thoughts={thoughts} onRestore={handleRestoreThought}
             onUnarchive={(id) => commitThoughts(thoughtActions.unarchive(id), "Thought returned to Completed.")} />
           <CompletedThoughts

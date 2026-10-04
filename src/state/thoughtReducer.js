@@ -1,7 +1,10 @@
-import { isActive } from "../domain/thoughts";
+import { isActive, validRevisitDate } from "../domain/thoughts";
 import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 
 export const thoughtActions = {
+  saveLater: (id, revisitDate = "") => ({ type: "thought/saveLater", id, revisitDate }),
+  setRevisitDate: (id, revisitDate) => ({ type: "thought/setRevisitDate", id, revisitDate }),
+  acknowledgeReminder: (id) => ({ type: "thought/acknowledgeReminder", id }),
   replace: (thoughts) => ({ type: "thoughts/replace", thoughts }),
   resolve: (id) => ({ type: "thought/resolve", id }),
   recordDecision: (id, decision) => ({ type: "thought/recordDecision", id, decision }),
@@ -107,6 +110,23 @@ function moveThought(state, id, category, beforeId) {
 
 export function thoughtReducer(state, action) {
   switch (action.type) {
+    case "thought/saveLater": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || !isActive(thought) || action.revisitDate && !validRevisitDate(action.revisitDate)) return state;
+      return updateThought(state, action.id, { status: "saved", savedAt: new Date().toISOString(),
+        revisitDate: action.revisitDate || undefined, reminderAcknowledgedDate: undefined,
+        deferredCount: (thought.deferredCount || 0) + 1 });
+    }
+    case "thought/setRevisitDate": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.status !== "saved" || action.revisitDate && !validRevisitDate(action.revisitDate)) return state;
+      return updateThought(state, action.id, { revisitDate: action.revisitDate || undefined, reminderAcknowledgedDate: undefined });
+    }
+    case "thought/acknowledgeReminder": {
+      const thought = state.find((item) => item.id === action.id);
+      if (!thought || thought.status !== "saved" || !thought.revisitDate) return state;
+      return updateThought(state, action.id, { reminderAcknowledgedDate: thought.revisitDate });
+    }
     case "thoughts/replace": return action.thoughts;
     case "thought/recordDecision": {
       const thought = state.find((item) => item.id === action.id);

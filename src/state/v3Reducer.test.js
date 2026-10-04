@@ -49,3 +49,18 @@ it("dismisses and restores Let Go thoughts and archives completed thoughts witho
   expect(reduce(archived, actions.unarchive("t"))[1].status).toBe("completed");
   expect(reduce(archived, actions.clearActive())).toHaveLength(2);
 });
+
+it("saves/returns a thought, counts repeated deferrals, and validates revisit dates", () => {
+  const initial = [{ id: "t", text: "Later", category: "do", isPriority: true, isNext: true }];
+  expect(reduce(initial, actions.saveLater("t", "2026-02-31"))).toBe(initial);
+  const saved = reduce(initial, actions.saveLater("t", "2026-10-05"));
+  expect(saved[0]).toMatchObject({ status: "saved", deferredCount: 1, revisitDate: "2026-10-05", isNext: false, priority: "none" });
+  const acknowledged = reduce(saved, actions.acknowledgeReminder("t"));
+  expect(acknowledged[0].reminderAcknowledgedDate).toBe("2026-10-05");
+  const rescheduled = reduce(acknowledged, actions.setRevisitDate("t", "2026-10-06"));
+  expect(rescheduled[0].reminderAcknowledgedDate).toBeUndefined();
+  const active = reduce(rescheduled, actions.restore("t"));
+  expect(active[0]).toMatchObject({ status: "active", deferredCount: 1 });
+  expect(active[0].revisitDate).toBeUndefined();
+  expect(reduce(active, actions.saveLater("t"))[0].deferredCount).toBe(2);
+});
