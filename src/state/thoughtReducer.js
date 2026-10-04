@@ -1,4 +1,6 @@
 export const thoughtActions = {
+  restoreRemoved: (entries) => ({ type: "thoughts/restoreRemoved", entries }),
+  clearActive: () => ({ type: "thoughts/clearActive" }),
   addMany: (thoughts) => ({ type: "thoughts/addMany", thoughts }),
   update: (id, changes) => ({ type: "thought/update", id, changes }),
   remove: (id) => ({ type: "thought/remove", id }),
@@ -38,6 +40,8 @@ function addMany(state, newThoughts) {
     ...state,
     ...newThoughts.map((thought) => keepDoOnlyState({
       ...thought,
+      createdAt: thought.createdAt || new Date().toISOString(),
+      updatedAt: thought.updatedAt || new Date().toISOString(),
       status: "active",
       isPriority: false,
       isNext: false
@@ -49,7 +53,7 @@ function updateThought(state, id, changes) {
   if (!state.some((thought) => thought.id === id)) return state;
   return state.map((thought) =>
     thought.id === id
-      ? keepDoOnlyState({ ...thought, ...changes })
+      ? keepDoOnlyState({ ...thought, ...changes, updatedAt: new Date().toISOString() })
       : thought
   );
 }
@@ -82,6 +86,17 @@ function moveThought(state, id, category, beforeId) {
 
 export function thoughtReducer(state, action) {
   switch (action.type) {
+    case "thoughts/clearActive":
+      return state.filter((thought) => thought.status === "completed");
+    case "thoughts/restoreRemoved": {
+      const next = [...state];
+      for (const { thought, index } of action.entries) {
+        if (!next.some((item) => item.id === thought.id)) next.splice(index, 0, {
+          ...thought, isNext: thought.isNext && !next.some((item) => item.isNext)
+        });
+      }
+      return next;
+    }
     case "thoughts/addMany":
       return addMany(state, action.thoughts);
     case "thought/update":

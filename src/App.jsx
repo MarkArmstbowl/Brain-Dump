@@ -4,6 +4,11 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -81,11 +86,13 @@ export default function App() {
   const [initialData] = useState(loadThoughts);
   const [thoughts, dispatchThoughts] = useReducer(thoughtReducer, initialData.thoughts);
   const [storageError, setStorageError] = useState(initialData.error);
+  const [search, setSearch] = useState("");
+  const [clearOpen, setClearOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeView, setActiveView] = useState("capture");
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
-  const [feedback, setFeedback] = useState({ message: "", undoThoughtId: null });
+  const [feedback, setFeedback] = useState({ message: "", undoThoughtId: null, undoAction: null });
   const [aiStates, setAiStates] = useState({});
   const [hasAiConsent, setHasAiConsent] = useState(loadAiConsent);
   const [pendingAiThoughtId, setPendingAiThoughtId] = useState(null);
@@ -125,10 +132,9 @@ export default function App() {
   );
   const visibleThoughts = useMemo(
     () =>
-      activeFilter === "all"
-        ? activeThoughts
-        : activeThoughts.filter((thought) => thought.category === activeFilter),
-    [activeFilter, activeThoughts]
+      activeThoughts.filter((thought) => (activeFilter === "all" || thought.category === activeFilter) &&
+        thought.text.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())),
+    [activeFilter, activeThoughts, search]
   );
   const doThoughts = useMemo(
     () => activeThoughts.filter((thought) => thought.category === "do"),
@@ -139,14 +145,14 @@ export default function App() {
     [doThoughts]
   );
 
-  function commitThoughts(action, message, { undoThoughtId = null } = {}) {
+  function commitThoughts(action, message, { undoThoughtId = null, undoAction = null } = {}) {
     const nextThoughts = thoughtReducer(thoughts, action);
     if (nextThoughts === thoughts) return;
     clearPlanningAiState();
     dispatchThoughts(action);
     setStorageError(saveThoughts(nextThoughts));
     setAnnouncement(message);
-    setFeedback({ message, undoThoughtId });
+    setFeedback({ message, undoThoughtId, undoAction });
   }
 
   function handleAddThoughts(newThoughts) {
@@ -171,7 +177,11 @@ export default function App() {
       setEditingId(null);
     }
     clearAiState(id);
-    commitThoughts(thoughtActions.remove(id), "Thought deleted.");
+    const index = thoughts.findIndex((thought) => thought.id === id);
+    if (index < 0) return;
+    commitThoughts(thoughtActions.remove(id), "Thought deleted.", {
+      undoAction: thoughtActions.restoreRemoved([{ thought: thoughts[index], index }])
+    });
   }
 
   function handleReorderThought(id, category, beforeId = null) {
@@ -628,6 +638,10 @@ export default function App() {
             onDismissSuggestion={clearPlanningAiState}
           />
 
+          <div className="dump-tools">
+            <TextField label="Search current thoughts" value={search} onChange={(event) => setSearch(event.target.value)} />
+            <Button color="error" disabled={!activeThoughts.length} onClick={() => setClearOpen(true)}>Clear current dump</Button>
+          </div>
           <ThoughtFilters activeFilter={activeFilter} onChange={handleFilterChange} />
           <ThoughtList
             thoughts={visibleThoughts}
@@ -679,12 +693,28 @@ export default function App() {
         onConfirm={handleConfirmPlanningConsent}
       />
 
+      <Dialog open={clearOpen} onClose={() => setClearOpen(false)}>
+        <DialogTitle>Clear current dump?</DialogTitle>
+        <DialogContent>Remove all {activeThoughts.length} active thoughts? Completed items are kept. You can undo this action.</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={() => {
+            const entries = thoughts.map((thought, index) => ({ thought, index })).filter(({ thought }) => thought.status !== "completed");
+            entries.forEach(({ thought }) => clearAiState(thought.id));
+            setClearOpen(false);
+            setEditingId(null);
+            commitThoughts(thoughtActions.clearActive(), "Current dump cleared.", { undoAction: thoughtActions.restoreRemoved(entries) });
+          }}>Clear thoughts</Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
+        key={feedback.message}
         open={Boolean(feedback.message)}
         autoHideDuration={3600}
         onClose={(_event, reason) => {
           if (reason !== "clickaway") {
-            setFeedback({ message: "", undoThoughtId: null });
+            setFeedback({ message: "", undoThoughtId: null, undoAction: null });
           }
         }}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
@@ -692,16 +722,18 @@ export default function App() {
         <Alert
           severity="success"
           variant="filled"
-          action={feedback.undoThoughtId ? (
+          action={feedback.undoThoughtId || feedback.undoAction ? (
             <Button
               color="inherit"
               size="small"
-              onClick={() => handleRestoreThought(feedback.undoThoughtId)}
+              onClick={() => feedback.undoAction
+                ? commitThoughts(feedback.undoAction, "Change undone.")
+                : handleRestoreThought(feedback.undoThoughtId)}
             >
               Undo
             </Button>
           ) : undefined}
-          onClose={() => setFeedback({ message: "", undoThoughtId: null })}
+          onClose={() => setFeedback({ message: "", undoThoughtId: null, undoAction: null })}
           role="status"
         >
           {feedback.message}

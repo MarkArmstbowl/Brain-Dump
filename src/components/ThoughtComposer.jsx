@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
@@ -7,6 +7,7 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ContentPasteGoRoundedIcon from "@mui/icons-material/ContentPasteGoRounded";
 import CategorySelect from "./CategorySelect";
+import { loadDrafts, saveDrafts } from "../storage/draftStorage";
 
 function createDraft() {
   return {
@@ -17,12 +18,18 @@ function createDraft() {
 }
 
 export default function ThoughtComposer({ onAddThoughts }) {
-  const [drafts, setDrafts] = useState(() => [createDraft()]);
+  const [savedDraft] = useState(loadDrafts);
+  const [drafts, setDrafts] = useState(() => savedDraft?.drafts || [createDraft()]);
+  const [draftStorageError, setDraftStorageError] = useState("");
   const [validationErrors, setValidationErrors] = useState({});
-  const [pasteOpen, setPasteOpen] = useState(false);
-  const [pastedText, setPastedText] = useState("");
+  const [pasteOpen, setPasteOpen] = useState(savedDraft?.pasteOpen || false);
+  const [pastedText, setPastedText] = useState(savedDraft?.pastedText || "");
   const [pasteError, setPasteError] = useState("");
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    setDraftStorageError(saveDrafts({ drafts, pastedText, pasteOpen }));
+  }, [drafts, pastedText, pasteOpen]);
 
   function updateDraft(id, changes) {
     setDrafts((currentDrafts) =>
@@ -114,6 +121,7 @@ export default function ThoughtComposer({ onAddThoughts }) {
         <p>Each thought can go somewhere different.</p>
       </div>
 
+      {draftStorageError && <p role="alert">{draftStorageError}</p>}
       <form onSubmit={handleSubmit}>
         <div className="capture-tools">
           <Button

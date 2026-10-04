@@ -13,7 +13,7 @@ describe("thoughtReducer", () => {
       startingThoughts,
       thoughtActions.addMany([{ id: "d", text: "New", category: "do" }])
     );
-    expect(next.at(-1)).toEqual({
+    expect(next.at(-1)).toMatchObject({
       id: "d",
       text: "New",
       category: "do",

@@ -2,6 +2,7 @@ import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { CATEGORY_LABELS } from "../constants";
 import CategorySuggestion from "./CategorySuggestion";
+import ThoughtTimestamps from "./ThoughtTimestamps";
 import ThoughtCardActions from "./ThoughtCardActions";
 import ThoughtEditForm from "./ThoughtEditForm";
 import ThoughtFocusTools from "./ThoughtFocusTools";
@@ -100,6 +101,7 @@ export default function ThoughtCard({
       </div>
 
       <p className="thought-text">{thought.text}</p>
+      <ThoughtTimestamps thought={thought} />
 
       <details className="thought-action-drawer">
         <summary>
