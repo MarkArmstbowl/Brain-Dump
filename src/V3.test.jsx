@@ -87,3 +87,24 @@ it("saves a thought with a revisit date, restores it after reload and acknowledg
   fireEvent.click(screen.getByRole("button", { name: "Return to active" }));
   expect(screen.getByText("Plan a trip", { selector: ".thought-text" })).toBeVisible();
 });
+
+it("starts a separate dump and opens/searches the previous dump after reload", () => {
+  seed([{ id: "h", text: "Email professor", category: "do" }, { id: "other", text: "Pick a course", category: "decide" }]);
+  const view = render(<App />);
+  fireEvent.click(screen.getByRole("tab", { name: "History" }));
+  fireEvent.change(screen.getByLabelText("New dump name"), { target: { value: "Fresh start" } });
+  fireEvent.click(screen.getByRole("button", { name: "Start new dump" }));
+  expect(screen.getByText("Current dump: Fresh start")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Open dump Imported dump" }));
+  expect(within(screen.getByLabelText("Opened previous dump")).getByText("Email professor")).toBeVisible();
+  view.unmount(); render(<App />);
+  fireEvent.click(screen.getByRole("tab", { name: "History" }));
+  fireEvent.change(screen.getByLabelText("Search previous thoughts"), { target: { value: "professor" } });
+  fireEvent.change(screen.getByLabelText("History category"), { target: { value: "do" } });
+  fireEvent.click(screen.getByRole("button", { name: "Open dump Imported dump" }));
+  const opened = within(screen.getByLabelText("Opened previous dump"));
+  expect(opened.getByText("Email professor")).toBeVisible();
+  expect(opened.queryByText("Pick a course")).toBeNull();
+  open();
+  expect(screen.queryByText("Email professor", { selector: ".thought-text" })).toBeNull();
+});

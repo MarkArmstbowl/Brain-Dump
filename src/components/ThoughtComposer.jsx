@@ -100,9 +100,10 @@ export default function ThoughtComposer({ onAddThoughts }) {
       return;
     }
 
-    onAddThoughts(
+    const added = onAddThoughts(
       drafts.map((draft) => ({ ...draft, text: draft.text.trim() }))
     );
+    if (added === false) return;
     const emptyDraft = createDraft();
     setDrafts([emptyDraft]);
     setValidationErrors({});

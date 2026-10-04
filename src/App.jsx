@@ -36,7 +36,8 @@ import {
   saveAiConsent,
   savePlanningAiConsent
 } from "./storage/aiConsentStorage";
-import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
+import { loadWorkspace, saveWorkspace, startDump, updateCurrentDump } from "./storage/workspaceStorage";
+import DumpHistory from "./components/DumpHistory";
 import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
 const AI_REQUEST_TIMEOUT_MS = 15_000;
@@ -88,7 +89,8 @@ function TabCountBadge({ count }) {
 }
 
 export default function App() {
-  const [initialData] = useState(loadThoughts);
+  const [initialData] = useState(loadWorkspace);
+  const [workspace, setWorkspace] = useState(initialData.workspace);
   const [thoughts, dispatchThoughts] = useReducer(thoughtReducer, initialData.thoughts);
   const [storageError, setStorageError] = useState(initialData.error);
   const [search, setSearch] = useState("");
@@ -151,22 +153,46 @@ export default function App() {
   );
 
   function commitThoughts(action, message, { undoThoughtId = null, undoAction = null } = {}) {
+    if (initialData.blocked) return false;
     const nextThoughts = thoughtReducer(thoughts, action);
-    if (nextThoughts === thoughts) return;
+    if (nextThoughts === thoughts) return false;
     clearPlanningAiState();
     thoughts.forEach((thought) => {
       const next = nextThoughts.find((item) => item.id === thought.id);
       if (!next || next.text !== thought.text || next.category !== thought.category || next.status !== thought.status) clearAiState(thought.id);
     });
     dispatchThoughts(thoughtActions.replace(nextThoughts));
-    setStorageError(saveThoughts(nextThoughts));
+    const nextWorkspace = updateCurrentDump(workspace, nextThoughts);
+    setWorkspace(nextWorkspace);
+    setStorageError(saveWorkspace(nextWorkspace));
     setAnnouncement(message);
     setFeedback({ message, undoThoughtId, undoAction });
+    return true;
+  }
+
+  function handleStartDump(title) {
+    if (initialData.blocked) return false;
+    const nextWorkspace = startDump(updateCurrentDump(workspace, thoughts), title);
+    const error = saveWorkspace(nextWorkspace);
+    setStorageError(error);
+    if (error) return false;
+    thoughts.forEach(({ id }) => clearAiState(id));
+    clearPlanningAiState();
+    setPendingAiThoughtId(null);
+    setPendingPlanningAction(null);
+    setEditingId(null);
+    setSearch("");
+    setActiveFilter("all");
+    setWorkspace(nextWorkspace);
+    dispatchThoughts(thoughtActions.replace([]));
+    setFeedback({ message: "Previous dump saved. New dump started.", undoThoughtId: null, undoAction: null });
+    setAnnouncement("New dump started. Previous thoughts are available in History.");
+    return true;
   }
 
   function handleAddThoughts(newThoughts) {
     setActiveFilter("all");
-    commitThoughts(
+    return commitThoughts(
       thoughtActions.addMany(newThoughts),
       `${newThoughts.length} ${newThoughts.length === 1 ? "thought" : "thoughts"} added.`
     );
@@ -513,7 +539,7 @@ export default function App() {
   function switchView(view) {
     setActiveView(view);
     setEditingId(null);
-    setAnnouncement(view === "capture" ? "Capture view opened." : "Organize view opened.");
+    setAnnouncement(`${view === "capture" ? "Capture" : view === "history" ? "History" : "Organize"} view opened.`);
   }
 
   return (
@@ -567,10 +593,15 @@ export default function App() {
               </Box>
             }
           />
+          <Tab value="history" id="history-tab" aria-controls="history-panel" label="History" />
         </Tabs>
       </nav>
 
+      <p className="current-dump-name">Current dump: {workspace.dumps.find(({ id }) => id === workspace.currentId)?.title}</p>
       <div className="workspace">
+        <section id="history-panel" className="workspace-view" role="tabpanel" aria-labelledby="history-tab" hidden={activeView !== "history"}>
+          <DumpHistory workspace={workspace} onStart={handleStartDump} />
+        </section>
         <section
           id="capture-panel"
           className="capture-column workspace-view"
