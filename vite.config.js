@@ -14,6 +14,9 @@ function aiSuggestionApi(env) {
     model: env.GROQ_MODEL,
     rateLimiter
   });
+  const batchCategoryHandler = createCategorySuggestionHandler({
+    apiKey: env.GROQ_API_KEY, model: env.GROQ_MODEL, rateLimiter, batch: true
+  });
   const priorityHandler = createListSuggestionHandler({
     kind: "priority",
     apiKey: env.GROQ_API_KEY,
@@ -34,6 +37,7 @@ function aiSuggestionApi(env) {
 
   function register(server) {
     server.middlewares.use("/api/category-suggestion", categoryHandler);
+    server.middlewares.use("/api/batch-category-suggestions", batchCategoryHandler);
     server.middlewares.use("/api/priority-suggestion", priorityHandler);
     server.middlewares.use("/api/next-suggestion", nextHandler);
     server.middlewares.use("/api/first-step-suggestion", firstStepHandler);
@@ -53,6 +57,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), aiSuggestionApi(env)],
     test: {
       environment: "jsdom",
+      maxWorkers: 1,
+      testTimeout: 30000,
       setupFiles: "./src/test/setup.js",
       css: true
     }

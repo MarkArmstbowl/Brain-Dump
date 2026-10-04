@@ -1,7 +1,9 @@
 import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import { CATEGORY_LABELS } from "../constants";
+import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 import CategorySuggestion from "./CategorySuggestion";
+import ThoughtLifecycleTools from "./ThoughtLifecycleTools";
+import ThoughtTimestamps from "./ThoughtTimestamps";
 import ThoughtCardActions from "./ThoughtCardActions";
 import ThoughtEditForm from "./ThoughtEditForm";
 import ThoughtFocusTools from "./ThoughtFocusTools";
@@ -28,6 +30,12 @@ export default function ThoughtCard({
   onSave,
   onDelete,
   onTogglePriority,
+  onSetPriority,
+  onComplete,
+  onRecordDecision,
+  onResolve,
+  onDismiss,
+  onSaveLater,
   onSelectNext,
   planningAiState,
   onRequestFirstStep,
@@ -68,6 +76,7 @@ export default function ThoughtCard({
             <span className="priority-badge">
               <StarRoundedIcon aria-hidden="true" fontSize="inherit" />
               Priority
+              <small> ({getPriority(thought)})</small>
             </span>
           )}
           {thought.isNext && (
@@ -100,6 +109,7 @@ export default function ThoughtCard({
       </div>
 
       <p className="thought-text">{thought.text}</p>
+      <ThoughtTimestamps thought={thought} />
 
       <details className="thought-action-drawer">
         <summary>
@@ -136,6 +146,12 @@ export default function ThoughtCard({
 
           <div className="thought-action-section">
             <p className="thought-action-section-label">Manage</p>
+            <ThoughtLifecycleTools thought={thought} onComplete={onComplete} onRecordDecision={onRecordDecision} onResolve={onResolve} onDismiss={onDismiss} onSaveLater={onSaveLater} />
+            {thought.category === "do" && <label>Priority level
+              <select aria-label={`Priority level for ${thought.text}`} value={getPriority(thought)} onChange={(event) => onSetPriority(thought.id, event.target.value)}>
+                {PRIORITY_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+              </select>
+            </label>}
             <ThoughtCardActions
               isDo={thought.category === "do"}
               isPriority={thought.isPriority}

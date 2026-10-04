@@ -15,3 +15,8 @@ export const CATEGORY_DESCRIPTIONS = {
   decide: "Needs a decision",
   "let-go": "No action needed"
 };
+
+export const PRIORITY_LEVELS = ["none", "low", "medium", "high"];
+export function getPriority(thought) {
+  return PRIORITY_LEVELS.includes(thought.priority) ? thought.priority : thought.isPriority ? "medium" : "none";
+}

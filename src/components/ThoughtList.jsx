@@ -18,6 +18,12 @@ export default function ThoughtList({
   onDelete,
   onReorder,
   onTogglePriority,
+  onSetPriority,
+  onComplete,
+  onRecordDecision,
+  onResolve,
+  onDismiss,
+  onSaveLater,
   onSelectNext,
   planningAiState,
   onRequestFirstStep,
@@ -115,6 +121,12 @@ export default function ThoughtList({
         onCancel={onCancelEdit}
         onSave={onSave}
         onDelete={onDelete}
+        onComplete={onComplete}
+        onRecordDecision={onRecordDecision}
+        onResolve={onResolve}
+        onDismiss={onDismiss}
+        onSaveLater={onSaveLater}
+        onSetPriority={onSetPriority}
         onTogglePriority={() => onTogglePriority(thought.id)}
         onSelectNext={() => onSelectNext(thought.id)}
         planningAiState={planningAiState}

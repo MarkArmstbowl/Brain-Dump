@@ -1,8 +1,9 @@
+import ThoughtTimestamps from "./ThoughtTimestamps";
 import Button from "@mui/material/Button";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
 import { CATEGORY_LABELS } from "../constants";
 
-export default function CompletedThoughts({ thoughts, onRestore }) {
+export default function CompletedThoughts({ thoughts, onRestore, onArchive }) {
   if (thoughts.length === 0) return null;
 
   return (
@@ -17,6 +18,7 @@ export default function CompletedThoughts({ thoughts, onRestore }) {
             <div>
               <p>{thought.text}</p>
               <span>{CATEGORY_LABELS[thought.category]}</span>
+              <ThoughtTimestamps thought={thought} />
             </div>
             <Button
               variant="text"
@@ -26,6 +28,7 @@ export default function CompletedThoughts({ thoughts, onRestore }) {
             >
               Restore
             </Button>
+            <Button onClick={() => onArchive(thought.id)}>Archive</Button>
           </div>
         ))}
       </div>

@@ -455,3 +455,19 @@ footer { margin-top: 30px; color: #838a82; font-size: 10px; letter-spacing: .04e
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+.dump-tools { display: flex; gap: 12px; align-items: center; margin-block: 16px; }
+.thought-timestamps { display: grid; gap: 3px; color: var(--bd-on-surface-variant); margin-block: 8px; }
+@media (max-width: 560px) { .dump-tools { flex-direction: column; align-items: stretch; } }
+.v3-panel { margin-block: 16px; padding: 16px; border: 1px solid var(--bd-outline-variant); border-radius: 12px; background: var(--bd-surface); }
+.v3-panel > summary { cursor: pointer; font-weight: 700; }
+.batch-choice { padding-block: 12px; border-bottom: 1px solid var(--bd-outline-variant); }
+.thought-action-content select, .v3-panel select { padding: 8px; margin: 8px; border-radius: 8px; }
+.history-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-block: 16px; }
+.current-dump-name { color: var(--bd-on-surface-variant); }
+.history-filters input[type="date"], .lifecycle-tools input[type="date"], .v3-panel input[type="date"] { display: block; padding: 8px; margin-block: 8px; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+.table-scroll table { width: 100%; border-collapse: collapse; margin-block: 12px; }
+.table-scroll caption { text-align: left; font-weight: 600; padding-block: 8px; }
+.table-scroll th, .table-scroll td { text-align: left; padding: 10px; border-bottom: 1px solid var(--bd-outline-variant); }
+.view-tabs .MuiTabs-list { flex-wrap: wrap; }

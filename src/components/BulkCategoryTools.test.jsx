@@ -1,0 +1,20 @@
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import BulkCategoryTools from "./BulkCategoryTools";
+import { getBatchCategorySuggestions } from "../api/categorySuggestion";
+vi.mock("../api/categorySuggestion", () => ({ getBatchCategorySuggestions: vi.fn() }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
+it("requires consent, previews reasons and waits for explicit application", async () => {
+  getBatchCategorySuggestions.mockResolvedValue([{ id: "a", category: "do", reason: "A concrete action." }]);
+  const onApply = vi.fn();
+  render(<BulkCategoryTools thoughts={[{ id: "a", text: "Send email", category: "unsorted" }]} onApply={onApply} />);
+  fireEvent.click(screen.getByText("Categorize the whole dump with AI"));
+  fireEvent.click(screen.getByRole("button", { name: "Suggest categories for whole dump" }));
+  expect(getBatchCategorySuggestions).not.toHaveBeenCalled();
+  expect(screen.getByRole("dialog")).toHaveTextContent("Send email");
+  fireEvent.click(screen.getByRole("button", { name: "I understand — send thought" }));
+  await waitFor(() => expect(screen.getByText("A concrete action.")).toBeVisible());
+  expect(onApply).not.toHaveBeenCalled();
+  fireEvent.click(await screen.findByRole("button", { name: "Apply reviewed categories" }));
+  expect(onApply).toHaveBeenCalledWith([{ id: "a", category: "do", reason: "A concrete action." }]);
+});

@@ -1,155 +1,98 @@
 # Brain Dump
 
-A small React web app for capturing and organizing thoughts when your mind feels full. Built as an Agile Methods class project.
-
-**Product vision:** To help overwhelmed people clear their mental clutter, regain a sense of control, and focus on what truly matters, one manageable step at a time.
-
-## Current Sprint Goal
-
-Enable users to move from a crowded brain dump to a focused next action, then complete, resolve, dismiss, or defer thoughts while keeping saved thoughts recoverable.
-
-## Version 1 features
-
-- **Add a thought:** Write a thought and click **Add Thought**. Empty or whitespace-only entries are rejected.
-- **Add multiple thoughts:** Add extra input rows, give each thought its own category, and submit them together.
-- **View all current thoughts:** See all thoughts together, grouped by category, with an empty state before the first entry.
-- **Edit a thought:** Click **Edit**, change the text, and click **Save**. **Cancel** discards the edit.
-- **Delete a thought:** Click **Delete** to remove that thought immediately.
-- **Manually categorize thoughts:** Assign each thought to **Do**, **Decide**, or **Let Go**.
-- **View thoughts by category:** The **All** view displays separate category groups.
-- **Move between categories:** Drag a card into another category in the **All** view, or change its category through **Edit**.
-
-## Completed baseline (through V2 item 8)
-
-The previous increment followed the force-ranked Version 2 backlog from top to bottom and stopped after **Override an AI suggestion**.
-
-1. **Paste multiple thoughts at once:** Paste one thought per line, split the text into editable rows, and review before adding.
-2. **Reorder thoughts:** Drag cards within a category to change their order. The saved order remains after refresh.
-3. **See number of thoughts:** View the total beside the Brain Dump heading.
-4. **Leave a thought uncategorized:** Keep any thought in **Unsorted**.
-5. **Filter thoughts by category:** Show All, Unsorted, Do, Decide, or Let Go.
-6. **Get an AI category suggestion:** Ask Groq to suggest Do, Decide, or Let Go.
-7. **Accept an AI suggestion:** Apply the suggested category explicitly.
-8. **Override an AI suggestion:** Choose and apply a different category instead.
-
-AI never changes a thought automatically. The current sprint now carries the focused action flow through restoring completed items. Decision resolution, dismissal recovery, and save-for-later remain outside the implemented scope.
-
-## Current sprint progress
-
-- **Mark a Do item as priority:** A Do card can be marked with a visible Priority badge.
-- **Change the priority:** Remove the priority mark or assign it to another Do card. Moving a priority card out of Do clears its priority because only actionable Do items can be prioritized.
-- **Get an AI priority suggestion:** Ask Groq to compare active Do items, review its suggestion, and choose whether to mark it.
-- **Select one item as Next:** Mark one Do card as the single current Next item.
-- **Change the selected Next item:** Open the inline chooser, keep the current selection while reviewing active Do items, and explicitly choose a replacement.
-- **Pause the current Next item:** Choose **Not now** to clear the Next selection without removing the thought from Do.
-- **Get an AI-recommended Next item:** Ask Groq to recommend one active Do item, then explicitly apply or dismiss it.
-- **Break a large item into a smaller first step:** Ask Groq for a smaller version of one Do item, review the proposed wording, then explicitly replace or dismiss it.
-- **Complete the current Next item:** Choose **Done** to remove the item from the active board and place it in Completed.
-- **Recover a completed item:** Undo completion from the success message or restore an item later from the collapsible Completed list.
-
-Priority remains a simple yes/no marker in this increment. Multiple priority levels and priority-based reordering remain separate backlog items. AI suggestions never change a thought, priority, or Next selection until the user applies them.
-
-### Engineering work completed this sprint
-
-- **Keyboard and touch reordering:** Every card in the grouped All view has focused up/down controls in addition to drag-and-drop. Order remains saved after refresh.
-- **Central thought reducer:** Add, edit, delete, move, category, priority, Next, completion, restoration, and first-step transitions use one tested reducer.
-- **Smaller thought-card components:** Editing, category AI, focus tools, ordering, and standard actions are separate components with the same visible behavior.
-- **Clearer Organize workspace:** The Focus panel centers the current Next action, **Change Next** opens an inline chooser, and optional AI help stays inside **Need help choosing?**. Category descriptions, counts, and a vertically stacked narrow-screen layout reduce scanning effort.
-
-Changes are saved using browser `localStorage` and persist after refreshing, including categories, order, priority and Next marks, and completion state. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
+A React app for capturing thoughts, organizing them, and choosing one manageable next action. Built as an Agile Methods class project.
 
 ## Run locally
 
-Use Node.js `20.19+` or `22.12+` and npm.
-
-Install the dependencies once:
+Use Node.js `20.19+` or `22.12+` and pnpm.
 
 ```sh
-npm install
-```
-
-Create your private environment file:
-
-```sh
+pnpm install
 cp .env.example .env
+pnpm dev
 ```
 
-Open `.env` and put your Groq key after the equals sign:
+The core app works without AI configuration. To enable AI, put your private Groq key in `.env` and restart the server:
 
 ```dotenv
-GROQ_API_KEY=gsk_your_key_here
+GROQ_API_KEY=your_actual_key
 GROQ_MODEL=openai/gpt-oss-20b
 ```
 
-Create a key on the [Groq API Keys page](https://console.groq.com/keys). Never commit or share the `.env` file. The supplied `.gitignore` excludes it, while `.env.example` documents the variable names for teammates.
-
-Restart the development server after changing `.env` so the new values are loaded.
-
-Then start the development server:
+The key stays on the server. Never commit `.env`.
 
 ```sh
-npm run dev
+pnpm test
+pnpm build
+pnpm preview
 ```
 
-Open the local URL printed in the terminal. Press `Ctrl+C` to stop the server.
+Tests run sequentially with a 30-second per-test timeout to accommodate slower development machines. Provider responses are mocked; passing tests do not establish live Groq availability.
 
-To verify a production build:
+## Capture and organize
 
-```sh
-npm run build
-```
+- Add, edit, delete, or submit multiple thoughts. Blank input is rejected.
+- Paste one thought per line, then review the editable rows. Bullet and numbered prefixes are removed.
+- Unfinished capture rows, categories, and unsplit pasted text survive refresh.
+- Assign Unsorted, Do, Decide, or Let Go; filter or search active thoughts.
+- The All view groups thoughts with category counts. The total counts active thoughts.
+- Drag thoughts between groups or reorder with keyboard/touch-friendly up/down controls.
+- New thoughts show creation and update timestamps. Older thoughts retain unknown creation dates rather than receiving invented ones.
+- Delete and clear-current-dump actions offer Undo. Clearing requires confirmation and preserves inactive items.
 
-Run the automated V1 and V2 regression checks:
+## AI and priority
 
-```sh
-npm test
-```
+- Request a category suggestion with a short explanation, accept it, override it, or ask again.
+- Whole-dump categorization previews all active text before sending it to Groq. Review and optionally change every proposed category before applying the batch.
+- Do items support none, low, medium, and high priority. Legacy priority marks load as medium. Reorder by priority explicitly saves a stable descending order within Do.
+- Select exactly one active Do item as Next, change it, or choose Not now.
+- AI can recommend a priority, recommend Next, or propose a smaller first step. Suggestions require explicit application. Applying a first step replaces the original wording.
 
-The application uses React and Vite. Vite server middleware sends the consented category or focus request to Groq, so the secret key never enters the browser bundle. No database is required: thoughts, priority marks, and the selected Next item remain in browser `localStorage`. Each teammate uses their own `.env` file and Groq key.
+Category and planning tools request separate first-use consent. Whole-dump requests preview and confirm the entire list each time, including Decide and Let Go text. Topic detection and summaries run locally.
 
-Before the first category request, the app shows the exact selected thought that will be sent, identifies Groq as the external provider, links to Groq's privacy policy, and allows the user to cancel. Focus tools use a separate consent because priority and Next recommendations send all active Do thought text for comparison; the dialog previews that exact list. A first-step request sends only its selected Do thought. Unsorted, Decide, and Let Go thoughts are not included in focus requests. Consent choices are remembered only in that browser.
+AI inputs are limited to 1,000 characters per thought and 50 thoughts per comparison or categorization batch. All AI routes share a limit of 12 requests per client per 60 seconds. Requests time out after 15 seconds; edits, lifecycle changes, deletion, and session changes invalidate obsolete suggestions.
 
-All local AI routes share a limit of **12 requests per client per 60 seconds**; additional requests receive HTTP 429 with a retry time. Restarting the local Vite server resets this in-memory limit.
+## Complete, decide, dismiss, and defer
 
-AI requests time out after 15 seconds. If a thought is edited, deleted, or assigned before its response arrives, the obsolete request is canceled so it cannot update the current card.
+- Complete any Do card directly, or choose Done for Next. Undo completion or restore from Completed.
+- Archive completed items, view them in Archived completed items, or return them to Completed.
+- Record a Decide outcome, mark it resolved, view resolved decisions, and reopen them while retaining the outcome.
+- Dismiss Let Go thoughts without deleting them; restore them from Dismissed thoughts.
+- Save any active thought for later with an optional revisit date; change the date or return it to active.
+- Due and overdue reminders appear while the app is open and on reopening. Dismiss a reminder for its date without deleting the saved thought.
+- Saved thoughts and reminders remain available across dumps. Returning an older saved thought brings it into the current dump while retaining its original history record.
 
-## Sprint Review demo / acceptance check
+Reminders use the browser's local calendar date. This browser-only app does not deliver push or email reminders when closed.
 
-Use a fresh browser profile or clear this site's local storage before starting. Clearing storage removes existing thoughts.
+## History and review
 
-1. Open the app and verify **Capture** is selected with a count of 0. Open **Organize** and verify its empty state, then return to **Capture**.
-2. In the **Capture** tab, click **Paste multiple thoughts**, paste at least three lines, and click **Split into thoughts**. Verify each line becomes an editable input row, then add them together.
-3. Use **Add another thought** to confirm manual multi-entry still works.
-4. Open **Organize** using its tab or **Organize thoughts**. Verify **All** groups the thoughts and the total count is correct. Check every category filter.
-5. Drag two cards within one category and verify their order changes. Use a card's up/down buttons with a mouse, touch, and keyboard Enter or Space; verify focus stays on the control and the order persists. Drag a card into another category and verify it moves.
-6. Click **Focus Do** and verify the Do column expands; click **Balance columns** to restore four equal columns. Open a Do card's **Actions**, click **Mark priority**, and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
-7. In each Do card's **Actions**, click **Make Next** and verify the focus panel names it. Click **Change Next**, verify the current item remains marked, and choose another Do item from the inline chooser.
-8. Click **Not now** and verify the thought stays in Do while the Next selection clears. Select it as Next again, click **Done**, and verify it leaves the active board. Use the Snackbar **Undo**, complete it again, then expand **Completed** and click **Restore**.
-9. Expand **Need help choosing?** and click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
-10. Click **Recommend my Next item**, review the suggestion, and click **Make this Next**. Verify it replaces the prior Next selection.
-11. Click **Make it smaller** for the current Next item, or open a large Do card's **Actions** and click **Break into first step**. Verify the original remains unchanged until the suggested first step is applied.
-12. Open a card's **Actions** and click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
-13. Click **Accept suggestion** and verify the card moves to that category.
-14. Request another category suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
-15. Use the **Edit** and **Delete** controls inside **Actions** to edit, cancel an edit, and delete thoughts, confirming the Version 1 behavior still works.
-16. Refresh and verify that the remaining thoughts, categories, order, priority and Next marks, and completed items persist.
+- In History, start a named new dump. The previous dump is preserved with all active and inactive thoughts.
+- Open previous dumps read-only; search thought text, decision outcomes, or dump names. Filter by category, status, and dump start date.
+- Review shows a short current-session summary, category distributions, completion events, and completed/resolved thoughts across dumps.
+- Recurring topic clues are repeated words across at least two dumps, excluding common words. They are not a semantic AI analysis.
+- Frequently deferred thoughts have been saved for later at least twice since tracking began.
+- Save a personal reflection for the current dump. It remains available after refresh and in history.
+- General wellness links point to NHS Every Mind Matters and WHO's Doing What Matters in Times of Stress.
 
-Also check that blank entries cannot be added or saved, Cancel preserves the original text, and deleting the final thought restores the empty state.
+Historical trends use recorded events and saved outcomes. Actions before tracking began may be unavailable; reopening an archived item is not counted as another completion.
 
-## Files and release scope
+## Storage and deployment
 
-- `index.html`: Vite entry page.
-- `src/App.jsx`: Application state and feature coordination.
-- `src/components/`: Forms, filters, list, and thought cards.
-- `src/state/thoughtReducer.js`: Tested state transitions for every active-thought mutation.
-- `src/api/categorySuggestion.js`: Browser call to the same-origin AI route.
-- `src/api/focusSuggestions.js`: Browser calls for priority, Next, and smaller-step suggestions.
-- `server/categorySuggestion.js`: Server-only Groq request, classification prompt, validation, and safe errors.
-- `server/focusSuggestion.js`: Server-only focus prompts, request validation, and structured AI response mapping.
-- `src/storage/thoughtStorage.js`: Compatible localStorage loading and saving.
-- `src/styles.css`: Responsive page and component styles.
-- `.env.example`: Safe template for the required local Groq configuration.
-- `.gitignore`: Excludes local configuration and generated files.
-- `TECHNICAL_DEBT.md`: AI-assisted code review, repair-cost estimate, and proposed force-ranked debt cards.
+Everything is saved in browser `localStorage`, on the current browser and origin. There are no accounts, database, or device sync. Clearing site data removes thoughts, drafts, history, consent, and reflections.
 
-The current sprint includes selecting, changing, pausing, and completing a Next item, plus undoing, viewing, and restoring completed items. Archiving completed items, reopening decisions, restoring dismissed thoughts, save-for-later reminders, automatic whole-dump categorization, history, reflection, wellness resources, accounts, and databases remain outside this sprint.
+Existing thoughts migrate into the first workspace dump without changing IDs or order. The authoritative workspace uses `brain-dump-workspace-v3`; the first history save retains the exact prior list in `brain-dump-before-history`. The `brain-dump-thoughts` cache is also maintained for compatibility. Drafts use a separate key. To roll back the history migration, back up the V3 workspace, restore the pre-history list to `brain-dump-thoughts`, and remove the V3 workspace key; changes made after that backup will remain only in the backed-up V3 workspace.
+
+Storage failures show a warning. A new dump cannot start unless history is saved. Corrupt history is left untouched and mutations are blocked until it is recovered, so entering a thought does not silently overwrite history.
+
+Vite middleware provides the AI routes in development and preview. Static hosting alone cannot run those routes; production hosting needs a server/serverless implementation for them.
+
+## Main files
+
+- `src/App.jsx`: application coordination and workspace persistence.
+- `src/state/thoughtReducer.js`: thought ordering, priority, and lifecycle transitions.
+- `src/state/savedThoughts.js`: cross-dump saved-thought recovery.
+- `src/storage/`: thoughts, drafts, consent, and versioned workspace storage.
+- `src/domain/`: reminders, history filters, summaries, and insights.
+- `src/components/`: capture, board, focus, lifecycle, history, and review UI.
+- `src/api/` and `server/`: browser AI calls and server-only Groq handlers.
+- `vite.config.js`: middleware registration and test configuration.
