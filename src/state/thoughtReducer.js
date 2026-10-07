@@ -2,6 +2,10 @@ import { isActive, validRevisitDate } from "../domain/thoughts";
 import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 
 export const thoughtActions = {
+  // Compatibility names from upstream use the same V3 transitions.
+  saveForLater: (id) => ({ type: "thought/saveLater", id, revisitDate: "" }),
+  returnSaved: (id) => ({ type: "thought/restore", id }),
+  resolveDecision: (id) => ({ type: "thought/resolve", id }),
   saveLater: (id, revisitDate = "") => ({ type: "thought/saveLater", id, revisitDate }),
   setRevisitDate: (id, revisitDate) => ({ type: "thought/setRevisitDate", id, revisitDate }),
   acknowledgeReminder: (id) => ({ type: "thought/acknowledgeReminder", id }),
@@ -78,7 +82,16 @@ function updateThought(state, id, changes) {
     const events = [...(thought.events || [])];
     if (changes.category && changes.category !== thought.category) events.push({ type: "category", at, from: thought.category, to: changes.category });
     if (changes.status && changes.status !== (thought.status || "active")) events.push({ type: changes.status, at, from: thought.status || "active" });
-    return keepDoOnlyState({ ...thought, ...changes, events, updatedAt: at });
+    const updated = { ...thought, ...changes, events, updatedAt: at };
+    if (changes.category && changes.category !== thought.category) {
+      if (changes.category !== "decide") {
+        updated.decision = undefined;
+        updated.decidedAt = undefined;
+        updated.resolvedAt = undefined;
+      }
+      if (changes.category !== "let-go") updated.dismissedAt = undefined;
+    }
+    return keepDoOnlyState(updated);
   });
 }
 
@@ -131,7 +144,7 @@ export function thoughtReducer(state, action) {
     case "thought/recordDecision": {
       const thought = state.find((item) => item.id === action.id);
       if (!thought || thought.category !== "decide" || !isActive(thought) || typeof action.decision !== "string" || !action.decision.trim()) return state;
-      return updateThought(state, action.id, { decision: action.decision.trim() });
+      return updateThought(state, action.id, { decision: action.decision.trim(), decidedAt: new Date().toISOString() });
     }
     case "thought/resolve": {
       const thought = state.find((item) => item.id === action.id);
@@ -225,6 +238,7 @@ export function thoughtReducer(state, action) {
       return updateThought(state, action.id, {
         status: "active",
         completedAt: undefined,
+        savedAt: undefined,
         resolvedAt: undefined,
         dismissedAt: undefined,
         revisitDate: undefined,

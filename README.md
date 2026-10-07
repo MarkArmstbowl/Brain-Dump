@@ -64,6 +64,8 @@ AI inputs are limited to 1,000 characters per thought and 50 thoughts per compar
 
 Reminders use the browser's local calendar date. This browser-only app does not deliver push or email reminders when closed.
 
+The selected workspace (Capture, Organize, History, or Review) is remembered after refresh. Card actions include an immediate **Later** action and **Set revisit date** for scheduling a reminder.
+
 ## History and review
 
 - In History, start a named new dump. The previous dump is preserved with all active and inactive thoughts.

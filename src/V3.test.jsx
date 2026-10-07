@@ -48,9 +48,9 @@ it("records/resolves/reopens decisions, dismisses/restores thoughts and archives
     card.querySelector("details").open = true;
     return within(card);
   }
-  fireEvent.click(actionsFor("Choose a course").getByRole("button", { name: "Record decision" }));
-  fireEvent.change(screen.getByLabelText("Decision outcome"), { target: { value: "Take art" } });
-  fireEvent.click(screen.getByRole("button", { name: "Save decision" }));
+  actionsFor("Choose a course");
+  fireEvent.change(screen.getByLabelText("What did you decide?"), { target: { value: "Take art" } });
+  fireEvent.click(screen.getByRole("button", { name: "Record decision" }));
   fireEvent.click(actionsFor("Choose a course").getByRole("button", { name: "Mark resolved" }));
   expect(screen.queryByText("Choose a course", { selector: ".thought-text" })).toBeNull();
   fireEvent.click(screen.getByText("Resolved decisions (1)", { selector: "summary" }));
@@ -72,7 +72,7 @@ it("saves a thought with a revisit date, restores it after reload and acknowledg
   const view = render(<App />); open();
   const card = screen.getByText("Plan a trip", { selector: ".thought-text" }).closest("li");
   card.querySelector("details").open = true;
-  fireEvent.click(within(card).getByRole("button", { name: "Save for later" }));
+  fireEvent.click(within(card).getByRole("button", { name: "Set revisit date" }));
   fireEvent.change(screen.getByLabelText("Revisit date"), { target: { value: "2020-01-01" } });
   fireEvent.click(screen.getByRole("button", { name: "Save thought for later" }));
   expect(screen.queryByText("Plan a trip", { selector: ".thought-text" })).toBeNull();
@@ -82,7 +82,7 @@ it("saves a thought with a revisit date, restores it after reload and acknowledg
   expect(screen.getByText(/Revisit reminder: Plan a trip/)).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Dismiss reminder" }));
   expect(screen.queryByText(/Revisit reminder: Plan a trip/)).toBeNull();
-  fireEvent.click(screen.getByText("Saved for later (1)", { selector: "summary" }));
+  fireEvent.click(screen.getByText("Saved for later", { selector: "summary > span" }));
   expect(screen.getByLabelText("Revisit date for Plan a trip")).toHaveValue("2020-01-01");
   fireEvent.click(screen.getByRole("button", { name: "Return to active" }));
   expect(screen.getByText("Plan a trip", { selector: ".thought-text" })).toBeVisible();

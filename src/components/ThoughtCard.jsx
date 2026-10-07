@@ -2,6 +2,7 @@ import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { CATEGORY_LABELS, getPriority, PRIORITY_LEVELS } from "../constants";
 import CategorySuggestion from "./CategorySuggestion";
+import ThoughtOutcomeTools from "./ThoughtOutcomeTools";
 import ThoughtLifecycleTools from "./ThoughtLifecycleTools";
 import ThoughtTimestamps from "./ThoughtTimestamps";
 import ThoughtCardActions from "./ThoughtCardActions";
@@ -126,6 +127,7 @@ export default function ThoughtCard({
                 thought={thought}
                 planningAiState={planningAiState}
                 onSelectNext={onSelectNext}
+                onTogglePriority={onTogglePriority}
                 onRequestFirstStep={onRequestFirstStep}
                 onApplyFirstStep={onApplyFirstStep}
                 onDismissPlanningSuggestion={onDismissPlanningSuggestion}
@@ -133,6 +135,10 @@ export default function ThoughtCard({
             </div>
           )}
 
+          {(thought.category === "decide" || thought.category === "let-go") && <div className="thought-action-section">
+            <p className="thought-action-section-label">{thought.category === "decide" ? "Decision" : "Let Go"}</p>
+            <ThoughtOutcomeTools thought={thought} onRecordDecision={(decision) => onRecordDecision(thought.id, decision)} onResolveDecision={() => onResolve(thought.id)} onDismissThought={() => onDismiss(thought.id)} />
+          </div>}
           <div className="thought-action-section">
             <p className="thought-action-section-label">Organize</p>
             <CategorySuggestion
@@ -153,9 +159,7 @@ export default function ThoughtCard({
               </select>
             </label>}
             <ThoughtCardActions
-              isDo={thought.category === "do"}
-              isPriority={thought.isPriority}
-              onTogglePriority={onTogglePriority}
+              onSaveForLater={() => onSaveLater(thought.id, "")}
               onEdit={onEdit}
               onDelete={() => onDelete(thought.id)}
             />

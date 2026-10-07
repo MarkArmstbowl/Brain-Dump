@@ -1,5 +1,6 @@
 import ThoughtTimestamps from "./ThoughtTimestamps";
 import Button from "@mui/material/Button";
+import TaskAltRoundedIcon from "@mui/icons-material/TaskAltRounded";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
 import { CATEGORY_LABELS } from "../constants";
 
@@ -9,6 +10,7 @@ export default function CompletedThoughts({ thoughts, onRestore, onArchive }) {
   return (
     <details className="completed-drawer">
       <summary>
+        <TaskAltRoundedIcon aria-hidden="true" fontSize="small" />
         <span>Completed</span>
         <span className="completed-count">{thoughts.length}</span>
       </summary>

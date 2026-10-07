@@ -44,6 +44,7 @@ import {
 import { loadWorkspace, saveWorkspace, startDump, updateCurrentDump } from "./storage/workspaceStorage";
 import ReviewInsights from "./components/ReviewInsights";
 import DumpHistory from "./components/DumpHistory";
+import { loadActiveView, saveActiveView } from "./storage/viewStorage";
 import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
 const AI_REQUEST_TIMEOUT_MS = 15_000;
@@ -84,7 +85,7 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [clearOpen, setClearOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [activeView, setActiveView] = useState("capture");
+  const [activeView, setActiveView] = useState(loadActiveView);
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const feedbackSequence = useRef(0);
@@ -533,6 +534,7 @@ export default function App() {
 
   function switchView(view) {
     setActiveView(view);
+    saveActiveView(view);
     setEditingId(null);
     setAnnouncement(`${view === "capture" ? "Capture" : view === "history" ? "History" : view === "review" ? "Review" : "Organize"} view opened.`);
   }

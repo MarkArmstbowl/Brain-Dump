@@ -22,6 +22,7 @@ vi.mock("./api/focusSuggestions", () => ({
 const THOUGHT_STORAGE_KEY = "brain-dump-thoughts";
 const CONSENT_STORAGE_KEY = "brain-dump-ai-consent";
 const PLANNING_CONSENT_STORAGE_KEY = "brain-dump-planning-ai-consent";
+const ACTIVE_VIEW_STORAGE_KEY = "brain-dump-active-view";
 
 function seedThoughts(thoughts) {
   localStorage.setItem(THOUGHT_STORAGE_KEY, JSON.stringify(thoughts));
@@ -66,6 +67,22 @@ describe("Brain Dump features", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+  });
+
+  it("returns to the selected workspace after a refresh", async () => {
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    expect(localStorage.getItem(ACTIVE_VIEW_STORAGE_KEY)).toBe("organize");
+    firstRender.unmount();
+    render(<App />);
+
+    expect(screen.getByRole("tab", { name: /Organize/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(document.querySelector("#organize-panel")).not.toHaveAttribute("hidden");
   });
 
   it("adds, views, edits, deletes, and persists a thought", async () => {
@@ -378,7 +395,7 @@ describe("Brain Dump features", () => {
     expect(savedAfterChange.filter(({ isNext }) => isNext)).toEqual([
       expect.objectContaining({ id: "second" })
     ]);
-    expect(within(secondCard).getByRole("button", { name: "Current Next" })).toBeDisabled();
+    expect(within(secondCard).getByText("Next")).toBeVisible();
     expect(within(firstCard).getByRole("button", { name: "Make Next" })).toBeEnabled();
 
     firstRender.unmount();
@@ -388,8 +405,7 @@ describe("Brain Dump features", () => {
       .getByText("Email the team", { selector: ".thought-text" })
       .closest("li");
     await openCardActions(user, reloadedSecondCard);
-    expect(within(reloadedSecondCard).getByRole("button", { name: "Current Next" }))
-      .toBeDisabled();
+    expect(within(reloadedSecondCard).getByText("Next")).toBeVisible();
 
     const decideGroup = screen.getByRole("heading", { name: "Decide" }).closest("section");
     const dataTransfer = createDataTransfer();
@@ -439,6 +455,104 @@ describe("Brain Dump features", () => {
       .toBeVisible();
     expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
       status: "active",
+      isNext: false
+    });
+  });
+
+  it("records and resolves a decision, then dismisses a Let Go thought", async () => {
+    seedThoughts([
+      { id: "decision", text: "Choose the meeting time", category: "decide" },
+      { id: "release", text: "Stop revisiting the old draft", category: "let-go" }
+    ]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    let decisionCard = screen
+      .getByText("Choose the meeting time", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, decisionCard);
+    await user.type(
+      within(decisionCard).getByLabelText("What did you decide?"),
+      "Meet on Tuesday morning"
+    );
+    await user.click(within(decisionCard).getByRole("button", { name: "Record decision" }));
+    expect(within(decisionCard).getByText("Meet on Tuesday morning")).toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "active",
+      decision: "Meet on Tuesday morning"
+    });
+
+    firstRender.unmount();
+    render(<App />);
+    await openOrganize(user);
+    decisionCard = screen
+      .getByText("Choose the meeting time", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, decisionCard);
+    expect(within(decisionCard).getByText("Meet on Tuesday morning")).toBeVisible();
+    await user.click(within(decisionCard).getByRole("button", { name: "Mark resolved" }));
+    expect(screen.queryByText("Choose the meeting time", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+
+    const letGoCard = screen
+      .getByText("Stop revisiting the old draft", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, letGoCard);
+    await user.click(within(letGoCard).getByRole("button", { name: "Dismiss thought" }));
+    expect(screen.queryByText("Stop revisiting the old draft", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+
+    const saved = JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY));
+    expect(saved.find(({ id }) => id === "decision").status).toBe("resolved");
+    expect(saved.find(({ id }) => id === "release").status).toBe("dismissed");
+  });
+
+  it("saves a thought for later, shows it after refresh, and returns it to active", async () => {
+    seedThoughts([
+      {
+        id: "later",
+        text: "Research presentation templates",
+        category: "do",
+        isPriority: true,
+        isNext: true
+      }
+    ]);
+    const user = userEvent.setup();
+    const firstRender = render(<App />);
+    await openOrganize(user);
+
+    const activeCard = screen
+      .getByText("Research presentation templates", { selector: ".thought-text" })
+      .closest("li");
+    await openCardActions(user, activeCard);
+    await user.click(within(activeCard).getByRole("button", { name: "Save for later" }));
+
+    expect(screen.queryByText("Research presentation templates", { selector: ".thought-text" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Choose one thing to move forward" }))
+      .toBeVisible();
+    expect(screen.getByText("Saved for later", { selector: "summary > span" })).toBeVisible();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "saved",
+      isPriority: false,
+      isNext: false
+    });
+
+    firstRender.unmount();
+    render(<App />);
+    await user.click(screen.getByText("Saved for later", { selector: "summary > span" }));
+    expect(screen.getByText("Research presentation templates")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Return to active" }));
+
+    expect(screen.getByText("Research presentation templates", { selector: ".thought-text" }))
+      .toBeVisible();
+    expect(screen.queryByText("Saved for later", { selector: "summary > span" }))
+      .not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(THOUGHT_STORAGE_KEY))[0]).toMatchObject({
+      status: "active",
+      category: "do",
+      isPriority: false,
       isNext: false
     });
   });

@@ -4,7 +4,7 @@ import ThoughtTimestamps from "./ThoughtTimestamps";
 export default function SavedThoughts({ thoughts, onRestore, onSetDate }) {
   if (!thoughts.length) return null;
   return <details className="v3-panel">
-    <summary>Saved for later ({thoughts.length})</summary>
+    <summary><span>Saved for later</span> ({thoughts.length})</summary>
     <p>Revisit reminders appear while the app is open, or when you reopen it after the date.</p>
     <ul>{thoughts.map((thought) => <li key={thought.id}>
       <p>{thought.text}</p>
