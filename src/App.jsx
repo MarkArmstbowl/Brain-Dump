@@ -17,6 +17,7 @@ import {
 import AiConsentDialog from "./components/AiConsentDialog";
 import CompletedThoughts from "./components/CompletedThoughts";
 import FocusTools from "./components/FocusTools";
+import SavedThoughts from "./components/SavedThoughts";
 import ThoughtComposer from "./components/ThoughtComposer";
 import ThoughtFilters from "./components/ThoughtFilters";
 import ThoughtList from "./components/ThoughtList";
@@ -27,6 +28,7 @@ import {
   savePlanningAiConsent
 } from "./storage/aiConsentStorage";
 import { loadThoughts, saveThoughts } from "./storage/thoughtStorage";
+import { loadActiveView, saveActiveView } from "./storage/viewStorage";
 import { thoughtActions, thoughtReducer } from "./state/thoughtReducer";
 
 const AI_REQUEST_TIMEOUT_MS = 15_000;
@@ -82,7 +84,7 @@ export default function App() {
   const [thoughts, dispatchThoughts] = useReducer(thoughtReducer, initialData.thoughts);
   const [storageError, setStorageError] = useState(initialData.error);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [activeView, setActiveView] = useState("capture");
+  const [activeView, setActiveView] = useState(loadActiveView);
   const [editingId, setEditingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const [feedback, setFeedback] = useState({ message: "", undoThoughtId: null });
@@ -116,11 +118,15 @@ export default function App() {
   }, []);
 
   const activeThoughts = useMemo(
-    () => thoughts.filter((thought) => thought.status !== "completed"),
+    () => thoughts.filter((thought) => !thought.status || thought.status === "active"),
     [thoughts]
   );
   const completedThoughts = useMemo(
     () => thoughts.filter((thought) => thought.status === "completed"),
+    [thoughts]
+  );
+  const savedThoughts = useMemo(
+    () => thoughts.filter((thought) => thought.status === "saved"),
     [thoughts]
   );
   const visibleThoughts = useMemo(
@@ -301,7 +307,7 @@ export default function App() {
 
   function handleTogglePriority(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do" || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || (thought.status && thought.status !== "active")) return;
 
     const isPriority = !thought.isPriority;
     commitThoughts(
@@ -312,7 +318,7 @@ export default function App() {
 
   function handleSelectNext(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.category !== "do" || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || (thought.status && thought.status !== "active")) return;
 
     commitThoughts(
       thoughtActions.selectNext(id),
@@ -329,7 +335,7 @@ export default function App() {
 
   function handleCompleteThought(id) {
     const thought = thoughts.find((item) => item.id === id);
-    if (!thought || thought.status === "completed") return;
+    if (!thought || thought.category !== "do" || (thought.status && thought.status !== "active")) return;
     clearAiState(id);
     commitThoughts(
       thoughtActions.complete(id),
@@ -342,6 +348,55 @@ export default function App() {
     commitThoughts(
       thoughtActions.restore(id),
       "Thought restored to your active list."
+    );
+  }
+
+  function handleRecordDecision(id, decision) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "decide" || thought.status === "resolved") return;
+
+    commitThoughts(
+      thoughtActions.recordDecision(id, decision),
+      "Decision recorded. Mark it resolved when it is settled."
+    );
+  }
+
+  function handleResolveDecision(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "decide" || !thought.decision) return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.resolveDecision(id),
+      "Decision resolved and removed from your active brain dump."
+    );
+  }
+
+  function handleDismissThought(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.category !== "let-go") return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.dismiss(id),
+      "Thought dismissed and removed from your active brain dump."
+    );
+  }
+
+  function handleSaveForLater(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || (thought.status && thought.status !== "active")) return;
+    clearAiState(id);
+    commitThoughts(
+      thoughtActions.saveForLater(id),
+      "Thought saved for later and removed from your active brain dump."
+    );
+  }
+
+  function handleReturnSavedThought(id) {
+    const thought = thoughts.find((item) => item.id === id);
+    if (!thought || thought.status !== "saved") return;
+    commitThoughts(
+      thoughtActions.returnSaved(id),
+      `Thought returned to ${CATEGORY_LABELS[thought.category]}.`
     );
   }
 
@@ -493,6 +548,7 @@ export default function App() {
 
   function switchView(view) {
     setActiveView(view);
+    saveActiveView(view);
     setEditingId(null);
     setAnnouncement(view === "capture" ? "Capture view opened." : "Organize view opened.");
   }
@@ -641,6 +697,10 @@ export default function App() {
             onReorder={handleReorderThought}
             onTogglePriority={handleTogglePriority}
             onSelectNext={handleSelectNext}
+            onRecordDecision={handleRecordDecision}
+            onResolveDecision={handleResolveDecision}
+            onDismissThought={handleDismissThought}
+            onSaveForLater={handleSaveForLater}
             planningAiState={planningAiState}
             onRequestFirstStep={(id) => handlePlanningRequest("first-step", id)}
             onApplyFirstStep={handleApplyFirstStep}
@@ -649,6 +709,11 @@ export default function App() {
             onRequestSuggestion={handleRequestSuggestion}
             onAcceptSuggestion={(id, category) => applyAiChoice(id, category, "accepted")}
             onOverrideSuggestion={(id, category) => applyAiChoice(id, category, "overridden")}
+          />
+
+          <SavedThoughts
+            thoughts={savedThoughts}
+            onReturn={handleReturnSavedThought}
           />
 
           <CompletedThoughts

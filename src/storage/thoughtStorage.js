@@ -25,8 +25,13 @@ export function loadThoughts() {
           typeof thought.text === "string" &&
           thought.text.trim() &&
           (thought.category === undefined || CATEGORY_LABELS[thought.category]) &&
-          (thought.status === undefined || ["active", "completed"].includes(thought.status)) &&
+          (thought.status === undefined || ["active", "completed", "resolved", "dismissed", "saved"].includes(thought.status)) &&
           (thought.completedAt === undefined || typeof thought.completedAt === "string") &&
+          (thought.decision === undefined || typeof thought.decision === "string") &&
+          (thought.decidedAt === undefined || typeof thought.decidedAt === "string") &&
+          (thought.resolvedAt === undefined || typeof thought.resolvedAt === "string") &&
+          (thought.dismissedAt === undefined || typeof thought.dismissedAt === "string") &&
+          (thought.savedAt === undefined || typeof thought.savedAt === "string") &&
           (thought.isPriority === undefined || typeof thought.isPriority === "boolean") &&
           (thought.isNext === undefined || typeof thought.isNext === "boolean")
       ) &&
@@ -43,7 +48,7 @@ export function loadThoughts() {
         const category = thought.category || "unsorted";
         const status = thought.status || "active";
         const isNext =
-          status !== "completed" &&
+          status === "active" &&
           category === "do" &&
           Boolean(thought.isNext) &&
           !hasNext;
@@ -53,7 +58,7 @@ export function loadThoughts() {
           category,
           status,
           isPriority:
-            status !== "completed" &&
+            status === "active" &&
             category === "do" &&
             Boolean(thought.isPriority),
           isNext

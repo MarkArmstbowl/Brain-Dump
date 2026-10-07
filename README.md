@@ -32,7 +32,7 @@ The previous increment followed the force-ranked Version 2 backlog from top to b
 7. **Accept an AI suggestion:** Apply the suggested category explicitly.
 8. **Override an AI suggestion:** Choose and apply a different category instead.
 
-AI never changes a thought automatically. The current sprint now carries the focused action flow through restoring completed items. Decision resolution, dismissal recovery, and save-for-later remain outside the implemented scope.
+AI never changes a thought automatically. The current sprint now carries the focused action flow through restoring completed items, recording and resolving decisions, dismissing Let Go thoughts, and saving thoughts for later. Viewing or restoring resolved and dismissed items, reminders, and revisit dates remain outside the implemented scope.
 
 ## Current sprint progress
 
@@ -46,17 +46,23 @@ AI never changes a thought automatically. The current sprint now carries the foc
 - **Break a large item into a smaller first step:** Ask Groq for a smaller version of one Do item, review the proposed wording, then explicitly replace or dismiss it.
 - **Complete the current Next item:** Choose **Done** to remove the item from the active board and place it in Completed.
 - **Recover a completed item:** Undo completion from the success message or restore an item later from the collapsible Completed list.
+- **Record a decision:** Add the outcome to an active Decide thought and keep it through refresh.
+- **Mark a Decide item resolved:** Resolve only after an outcome is recorded, then remove the item from the active board.
+- **Dismiss a Let Go item:** Dismiss it and remove it from the active board.
+- **Save a thought for later:** Move any active thought out of the current board without deleting it.
+- **View saved thoughts:** Expand the Saved for later drawer to review deferred thoughts and their original categories.
+- **Return a saved thought to active:** Return it to its original category without restoring old Priority or Next marks.
 
 Priority remains a simple yes/no marker in this increment. Multiple priority levels and priority-based reordering remain separate backlog items. AI suggestions never change a thought, priority, or Next selection until the user applies them.
 
 ### Engineering work completed this sprint
 
 - **Keyboard and touch reordering:** Every card in the grouped All view has focused up/down controls in addition to drag-and-drop. Order remains saved after refresh.
-- **Central thought reducer:** Add, edit, delete, move, category, priority, Next, completion, restoration, and first-step transitions use one tested reducer.
+- **Central thought reducer:** Add, edit, delete, move, category, priority, Next, completion, restoration, decision, resolution, dismissal, save-for-later, return-to-active, and first-step transitions use one tested reducer.
 - **Smaller thought-card components:** Editing, category AI, focus tools, ordering, and standard actions are separate components with the same visible behavior.
 - **Clearer Organize workspace:** The Focus panel centers the current Next action, **Change Next** opens an inline chooser, and optional AI help stays inside **Need help choosing?**. Category descriptions, counts, and a vertically stacked narrow-screen layout reduce scanning effort.
 
-Changes are saved using browser `localStorage` and persist after refreshing, including categories, order, priority and Next marks, and completion state. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
+Changes are saved using browser `localStorage` and persist after refreshing, including categories, order, priority and Next marks, completion state, recorded decisions, resolved, dismissed, or saved status, and the last open Capture or Organize workspace. Data stays in the current browser and origin; it does not sync between devices. Clearing site data removes saved thoughts. If browser storage is unavailable or full, the app displays a warning that changes could not be saved.
 
 ## Run locally
 
@@ -125,14 +131,17 @@ Use a fresh browser profile or clear this site's local storage before starting. 
 6. Click **Focus Do** and verify the Do column expands; click **Balance columns** to restore four equal columns. Open a Do card's **Actions**, click **Mark priority**, and verify its Priority badge appears. Refresh to verify the mark persists, then remove it or move the card out of Do and verify the badge clears.
 7. In each Do card's **Actions**, click **Make Next** and verify the focus panel names it. Click **Change Next**, verify the current item remains marked, and choose another Do item from the inline chooser.
 8. Click **Not now** and verify the thought stays in Do while the Next selection clears. Select it as Next again, click **Done**, and verify it leaves the active board. Use the Snackbar **Undo**, complete it again, then expand **Completed** and click **Restore**.
-9. Expand **Need help choosing?** and click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
-10. Click **Recommend my Next item**, review the suggestion, and click **Make this Next**. Verify it replaces the prior Next selection.
-11. Click **Make it smaller** for the current Next item, or open a large Do card's **Actions** and click **Break into first step**. Verify the original remains unchanged until the suggested first step is applied.
-12. Open a card's **Actions** and click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
-13. Click **Accept suggestion** and verify the card moves to that category.
-14. Request another category suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
-15. Use the **Edit** and **Delete** controls inside **Actions** to edit, cancel an edit, and delete thoughts, confirming the Version 1 behavior still works.
-16. Refresh and verify that the remaining thoughts, categories, order, priority and Next marks, and completed items persist.
+9. Open a Decide card's **Actions**, enter an outcome under **What did you decide?**, and click **Record decision**. Refresh to verify it persists, then click **Mark resolved** and verify the card leaves the active board.
+10. Open a Let Go card's **Actions**, click **Dismiss thought**, and verify it leaves the active board.
+11. Open any active card's **Actions**, click **Later**, and verify it leaves the active board. Expand **Saved for later**, refresh to verify it persists, then click **Return to active** and verify it returns to its original category.
+12. Expand **Need help choosing?** and click **Suggest a priority**. On first use, verify the consent dialog lists only active Do thoughts. Confirm, review the suggestion, and click **Mark as priority**.
+13. Click **Recommend my Next item**, review the suggestion, and click **Make this Next**. Verify it replaces the prior Next selection.
+14. Click **Make it smaller** for the current Next item, or open a large Do card's **Actions** and click **Break into first step**. Verify the original remains unchanged until the suggested first step is applied.
+15. Open a card's **Actions** and click **Suggest category**. Verify the AI suggestion appears but the card does not move yet.
+16. Click **Accept suggestion** and verify the card moves to that category.
+17. Request another category suggestion, click **Choose another**, select a different category, and click **Use my choice**. Verify the override is used.
+18. Use the **Edit** and **Delete** controls inside **Actions** to edit, cancel an edit, and delete thoughts, confirming the Version 1 behavior still works.
+19. Refresh and verify that the remaining thoughts, categories, order, priority and Next marks, completed and saved items, and recorded outcomes persist.
 
 Also check that blank entries cannot be added or saved, Cancel preserves the original text, and deleting the final thought restores the empty state.
 
@@ -152,4 +161,4 @@ Also check that blank entries cannot be added or saved, Cancel preserves the ori
 - `.gitignore`: Excludes local configuration and generated files.
 - `TECHNICAL_DEBT.md`: AI-assisted code review, repair-cost estimate, and proposed force-ranked debt cards.
 
-The current sprint includes selecting, changing, pausing, and completing a Next item, plus undoing, viewing, and restoring completed items. Archiving completed items, reopening decisions, restoring dismissed thoughts, save-for-later reminders, automatic whole-dump categorization, history, reflection, wellness resources, accounts, and databases remain outside this sprint.
+The current sprint includes selecting, changing, pausing, and completing a Next item; undoing, viewing, and restoring completed items; recording and resolving decisions; dismissing Let Go thoughts; and saving, viewing, and returning deferred thoughts. Viewing and reopening resolved decisions, viewing and restoring dismissed thoughts, reminders, revisit dates, archiving completed items, automatic whole-dump categorization, history, reflection, wellness resources, accounts, and databases remain outside this increment.

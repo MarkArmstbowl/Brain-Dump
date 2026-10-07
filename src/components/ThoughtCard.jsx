@@ -6,6 +6,7 @@ import ThoughtCardActions from "./ThoughtCardActions";
 import ThoughtEditForm from "./ThoughtEditForm";
 import ThoughtFocusTools from "./ThoughtFocusTools";
 import ThoughtOrderControls from "./ThoughtOrderControls";
+import ThoughtOutcomeTools from "./ThoughtOutcomeTools";
 
 export default function ThoughtCard({
   thought,
@@ -29,6 +30,10 @@ export default function ThoughtCard({
   onDelete,
   onTogglePriority,
   onSelectNext,
+  onRecordDecision,
+  onResolveDecision,
+  onDismissThought,
+  onSaveForLater,
   planningAiState,
   onRequestFirstStep,
   onApplyFirstStep,
@@ -104,18 +109,19 @@ export default function ThoughtCard({
       <details className="thought-action-drawer">
         <summary>
           <span>Actions</span>
-          <span className="thought-action-hint">
-            {thought.category === "do" ? "Focus, organize & manage" : "Organize & manage"}
-          </span>
         </summary>
         <div className="thought-action-content">
           {thought.category === "do" && (
             <div className="thought-action-section">
-              <p className="thought-action-section-label">Focus</p>
+              <div className="thought-action-section-heading">
+                <p className="thought-action-section-label">Plan</p>
+                <span>Priority or Next</span>
+              </div>
               <ThoughtFocusTools
                 thought={thought}
                 planningAiState={planningAiState}
                 onSelectNext={onSelectNext}
+                onTogglePriority={onTogglePriority}
                 onRequestFirstStep={onRequestFirstStep}
                 onApplyFirstStep={onApplyFirstStep}
                 onDismissPlanningSuggestion={onDismissPlanningSuggestion}
@@ -123,8 +129,30 @@ export default function ThoughtCard({
             </div>
           )}
 
+          {(thought.category === "decide" || thought.category === "let-go") && (
+            <div className="thought-action-section thought-outcome-section">
+              <div className="thought-action-section-heading">
+                <p className="thought-action-section-label">
+                  {thought.category === "decide" ? "Decision" : "Let go"}
+                </p>
+                <span>
+                  {thought.category === "decide" ? "Record, then resolve" : "Clear from active view"}
+                </span>
+              </div>
+              <ThoughtOutcomeTools
+                thought={thought}
+                onRecordDecision={onRecordDecision}
+                onResolveDecision={onResolveDecision}
+                onDismissThought={onDismissThought}
+              />
+            </div>
+          )}
+
           <div className="thought-action-section">
-            <p className="thought-action-section-label">Organize</p>
+            <div className="thought-action-section-heading">
+              <p className="thought-action-section-label">Category</p>
+              <span>AI suggestion</span>
+            </div>
             <CategorySuggestion
               thought={thought}
               aiState={aiState}
@@ -134,12 +162,9 @@ export default function ThoughtCard({
             />
           </div>
 
-          <div className="thought-action-section">
-            <p className="thought-action-section-label">Manage</p>
+          <div className="thought-management-section">
             <ThoughtCardActions
-              isDo={thought.category === "do"}
-              isPriority={thought.isPriority}
-              onTogglePriority={onTogglePriority}
+              onSaveForLater={onSaveForLater}
               onEdit={onEdit}
               onDelete={() => onDelete(thought.id)}
             />
